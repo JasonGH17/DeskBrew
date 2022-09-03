@@ -10,6 +10,7 @@
 				"-fdiagnostics-color=always",
 				"-g",
 				"${workspaceFolder}/src/main.cpp",
+				"${workspaceFolder}/src/Window/Win32.cpp",
 				"-o",
 				"${workspaceFolder}/DeskBrew.exe"
 			],
