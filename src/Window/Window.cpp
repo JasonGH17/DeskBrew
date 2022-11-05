@@ -20,6 +20,7 @@ LRESULT Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
     {
     case WM_DESTROY:
         printf("Destroyed window (WIN32)\n");
+        running = false;
         PostQuitMessage(0);
         return 0;
 
