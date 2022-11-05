@@ -1,7 +1,10 @@
-#include <stdio.h>
+#include "Window/Window.h"
 
-int main() {
-    printf("Hello world!");
+int main()
+{
+    Window window = Window();
+
+    window.start();
 
     return 0;
 }

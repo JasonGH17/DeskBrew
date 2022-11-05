@@ -1,47 +1,45 @@
 #include "Win32.h"
 
-Win32::Win32()
-{
+#include "Window.h"
+
+Win32::Win32() {
     running = true;
-    hwnd = NULL;
 }
 Win32::~Win32() {}
 
-LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
-{
-    Win32 *window = (Win32 *)GetWindowLong(hwnd, GWLP_USERDATA);
+LRESULT CALLBACK Win32::wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+    Window *pthis = NULL;
 
-    switch (msg)
+    // Sets up class instance pointer
+    if (msg == WM_NCCREATE) 
     {
-    case WM_CREATE:
+        pthis = (Window *)((CREATESTRUCT *)lParam)->lpCreateParams;
+        SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pthis);
+
+        pthis->hwnd = hwnd;
+    } 
+    else 
     {
-        window->onCreate();
-        break;
+        pthis = (Window *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     }
 
-    case WM_DESTROY:
+    if (pthis) 
     {
-        window->onDestroy();
-        ::PostQuitMessage(0);
-        break;
+        return pthis->handleMessage(msg, wParam, lParam);
     }
-
-    case WM_SIZE:
-        // window->onResize();
-        break;
-
-    default:
-        return ::DefWindowProc(hwnd, msg, wparam, lparam);
+    else
+    {
+        return DefWindowProc(hwnd, msg, wParam, lParam);
     }
-};
+}
 
 bool Win32::init()
 {
     WNDCLASSEX wc;
 
-    wc.cbClsExtra = NULL;
+    wc.cbClsExtra = 0;
     wc.cbSize = sizeof(WNDCLASSEX);
-    wc.cbWndExtra = NULL;
+    wc.cbWndExtra = 0;
     wc.hbrBackground = (HBRUSH)COLOR_WINDOW;
     wc.hCursor = LoadCursor(NULL, IDC_ARROW);
     wc.hIcon = LoadIcon(NULL, IDI_APPLICATION);
@@ -49,8 +47,8 @@ bool Win32::init()
     wc.hInstance = NULL;
     wc.lpszClassName = L"DeskBrew";
     wc.lpszMenuName = L"";
-    wc.style = NULL;
-    wc.lpfnWndProc = &wndProc;
+    wc.style = 0;
+    wc.lpfnWndProc = Window::wndProc;
 
     if (!::RegisterClassEx(&wc))
     {
@@ -60,8 +58,6 @@ bool Win32::init()
 
     hwnd = ::CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, L"DeskBrew", L"DeskBrew", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1024, 768, NULL, NULL, NULL, this);
 
-    SetWindowLong(hwnd, GWLP_USERDATA, (long)this);
-
     if (!hwnd)
         return false;
 
@@ -69,6 +65,30 @@ bool Win32::init()
     ::UpdateWindow(hwnd);
 
     running = true;
+    return true;
+}
+
+bool Win32::kill()
+{
+    if (!::DestroyWindow(hwnd))
+        return false;
+
+    running = false;
+    return true;
+}
+
+bool Win32::broadcast()
+{
+    MSG msg;
+
+    while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE) > 0)
+    {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    Sleep(0);
+
     return true;
 }
 

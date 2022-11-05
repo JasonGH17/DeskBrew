@@ -1,17 +1,19 @@
 #pragma once
 
-#include <Windows.h>
+#ifndef UNICODE
+#define UNICODE
+#endif
 
+#include <windows.h>
 #include <stdio.h>
-#include <functional>
-
-typedef std::function<LRESULT (HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)> wndFunc;
 
 class Win32
 {
 public:
     Win32();
     ~Win32();
+
+    static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
 
     bool init();
     bool kill();
@@ -20,11 +22,8 @@ public:
     bool isRunning();
     HWND getHWND();
 
-    virtual void onCreate();
-    virtual void onDestroy();
-    // virtual void onResize();
-
-private:
+protected:
+    virtual LRESULT handleMessage(UINT msg, WPARAM wParam, LPARAM lParam) = 0;
     HWND hwnd;
     bool running;
 };

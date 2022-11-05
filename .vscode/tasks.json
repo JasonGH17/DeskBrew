@@ -1,23 +1,26 @@
 {
-	"version": "2.0.0",
-	"tasks": [
-		{
-			"label": "Compile Project",
-			"command": "g++.exe",
-			"args": [
-				"-DUNICODE",
-				"-std=c++17",
-				"-fdiagnostics-color=always",
-				"-g",
-				"${workspaceFolder}/src/main.cpp",
-				"${workspaceFolder}/src/Window/Win32.cpp",
-				"-o",
-				"${workspaceFolder}/DeskBrew.exe"
-			],
-			"options": {
-				"cwd": "${workspaceFolder}/src"
-			},
-			"problemMatcher": ["$gcc"]
-		}
-	]
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Compile Project",
+            "command": "g++",
+            "args": [
+                "--std=c++17",
+                "-Wall",
+                "-Werror",
+                "-pedantic",
+                "${workspaceFolder}/src/main.cpp",
+                "${workspaceFolder}/src/Window/Win32.cpp",
+                "${workspaceFolder}/src/Window/Window.cpp",
+                "-o DeskBrew.exe"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/src"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build"
+        }
+    ]
 }
