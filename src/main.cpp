@@ -4,7 +4,5 @@ int main()
 {
     VkWindow window = VkWindow();
 
-   /*  window.start(); */
-
     return 0;
 }

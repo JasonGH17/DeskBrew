@@ -9,7 +9,8 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "VK_DEBUG"
             ],
             "windowsSdkVersion": "10.0.19041.0",
             "cStandard": "c17",

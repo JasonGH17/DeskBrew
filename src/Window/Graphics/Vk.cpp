@@ -12,7 +12,43 @@ VkWindow::VkWindow() {
 
 VkWindow::~VkWindow() {}
 
+bool VkWindow::checkInstanceExtSupport() {
+    uint32_t extCount = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
+    std::vector<VkExtensionProperties> extProps(extCount);
+    vkEnumerateInstanceExtensionProperties(nullptr, &extCount, extProps.data());
+
+    if(VK_DEBUG) {
+        printf("[VK_DEBUG] (%d) Available vulkan instance extensions:\n", extCount);
+        for (VkExtensionProperties &ext : extProps)
+            printf("\t- %s\n", ext.extensionName);
+    }
+
+    if(EXTCOUNT > extCount) {
+        return false;
+    }
+
+    for(const char* extName : extensionNames) {
+        bool found = false;
+        for(VkExtensionProperties& ext : extProps) {
+            if(strcmp(ext.extensionName, extName) == 0){
+                found = true;
+                break;
+            }
+        }
+        if(!found)
+            return false;
+    }
+
+    return true;
+}
+
 void VkWindow::createInstance() {
+    if(!checkInstanceExtSupport()) {
+        printf("[VK] Some needed Vulkan instance extensions aren't supported on this system...\n");
+        exit(1);
+    }
+
     printf("[VK] Creating instance...\n");
 
     VkApplicationInfo appInfo{};
@@ -24,13 +60,10 @@ void VkWindow::createInstance() {
     appInfo.engineVersion = VK_MAKE_API_VERSION(0, 0, 0, 1);
     appInfo.apiVersion = VK_API_VERSION_1_3;
 
-    // WINDOWS EXTENSIONS
-    const char *extensionNames[2] = {"VK_KHR_surface", "VK_KHR_win32_surface"};
-
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
-    createInfo.enabledExtensionCount = 2;
+    createInfo.enabledExtensionCount = EXTCOUNT;
     createInfo.ppEnabledExtensionNames = extensionNames;
     createInfo.enabledLayerCount = 0;
 

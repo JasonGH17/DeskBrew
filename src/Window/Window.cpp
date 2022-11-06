@@ -16,13 +16,13 @@ LRESULT Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
     switch (msg)
     {
     case WM_DESTROY:
-        printf("Destroyed window (WIN32)\n");
+        printf("[WIN32] Destroyed window\n");
         running = false;
         PostQuitMessage(0);
         return 0;
 
     case WM_CREATE:
-        printf("Created new window (WIN32)\n");
+        printf("[WIN32] Created new window\n");
         return 0;
 
     case WM_PAINT:
