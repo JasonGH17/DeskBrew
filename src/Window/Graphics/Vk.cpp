@@ -2,6 +2,7 @@
 
 VkWindow::VkWindow() {
     createInstance();
+    pickPhysicalDevice();
     if(init()) {
         start();
     } else {
@@ -43,7 +44,42 @@ bool VkWindow::checkInstanceExtSupport() {
     return true;
 }
 
+bool VkWindow::checkValidationLayersSupport() {
+    uint32_t valCount = 0;
+    vkEnumerateInstanceLayerProperties(&valCount, nullptr);
+    std::vector<VkLayerProperties> valProps(valCount);
+    vkEnumerateInstanceLayerProperties(&valCount, valProps.data());
+
+    if(VK_DEBUG) {
+        printf("[VK_DEBUG] (%d) Available vulkan validation layers:\n", valCount);
+        for (VkLayerProperties &valLayer : valProps)
+            printf("\t- %s\n", valLayer.layerName);
+    }
+
+    if(VALCOUNT > valCount) {
+        return false;
+    }
+
+    for(const char* valLayerName : validationLayers) {
+        bool found = false;
+        for(VkLayerProperties& valLayer : valProps) {
+            if(strcmp(valLayer.layerName, valLayerName) == 0){
+                found = true;
+                break;
+            }
+        }
+        if(!found)
+            return false;
+    }
+
+    return true;
+};
+
 void VkWindow::createInstance() {
+    if(enableValidationLayers && !checkValidationLayersSupport()) {
+        printf("[VK_DEBUG] Some validation layers aren't supported on this system...\n");
+        exit(1);
+    }
     if(!checkInstanceExtSupport()) {
         printf("[VK] Some needed Vulkan instance extensions aren't supported on this system...\n");
         exit(1);
@@ -65,7 +101,12 @@ void VkWindow::createInstance() {
     createInfo.pApplicationInfo = &appInfo;
     createInfo.enabledExtensionCount = EXTCOUNT;
     createInfo.ppEnabledExtensionNames = extensionNames;
-    createInfo.enabledLayerCount = 0;
+
+    if(enableValidationLayers) {
+        createInfo.enabledLayerCount = VALCOUNT;
+        createInfo.ppEnabledLayerNames = validationLayers;
+    } else
+        createInfo.enabledLayerCount = 0;
 
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
     {
