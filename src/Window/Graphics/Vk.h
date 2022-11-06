@@ -5,12 +5,20 @@
 
 #include <stdexcept>
 #include <vector>
+#include <optional>
 #include <string.h>
 
 #define VK_DEBUG true
 
 #define EXTCOUNT 2
 #define VALCOUNT 1
+
+struct QueueFamilyIndices {
+    std::optional<uint32_t> graphicsFamily;
+    bool isComplete() {
+        return graphicsFamily.has_value();
+    }
+};
 
 class VkWindow : public Window {
 public:
@@ -34,4 +42,6 @@ private:
     #else
     const bool enableValidationLayers = true;
     #endif
+
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 };

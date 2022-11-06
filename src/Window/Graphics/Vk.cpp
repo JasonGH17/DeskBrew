@@ -116,6 +116,65 @@ void VkWindow::createInstance() {
     printf("[VK] Created Vulkan instance\n");
 }
 
+// Implement better system later on (Or make it changeable by the user via UI)
+bool isDeviceSuitable(VkPhysicalDevice device) {
+    VkPhysicalDeviceProperties deviceProperties;
+    VkPhysicalDeviceFeatures deviceFeatures;
+    vkGetPhysicalDeviceProperties(device, &deviceProperties);
+    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+    if(deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader) {
+        QueueFamilyIndices indices = findQueueFamilies(device);
+        return indices.isComplete();
+    };
+    return false;
+}
+
+QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+    QueueFamilyIndices indices;
+
+    uint32_t queueCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueCount, nullptr);
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueCount, queueFamilies.data());
+
+    int i = 0;
+    for (VkQueueFamilyProperties queueFamily : queueFamilies) {
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+            indices.graphicsFamily = i;
+        }
+        if(indices.isComplete())
+            break;
+        i++;
+    }
+
+    return indices;
+}
+
+void VkWindow::pickPhysicalDevice() {
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
+    
+    if(deviceCount == 0) {
+        printf("[VK] No devices support Vulkan on this machine...\n");
+        exit(1);
+    }
+
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
+
+    for(const VkPhysicalDevice& device : devices) {
+        if(isDeviceSuitable(device)) {
+            physicalDevice = device;
+            break;
+        }
+    }
+
+    if(physicalDevice == VK_NULL_HANDLE) {
+        printf("[VK] No suitable Vulkan compliant devices were found on this machine...\n");
+        exit(1);
+    }
+}
+
 void VkWindow::cleanup() {
     vkDestroyInstance(instance, nullptr);
 }
