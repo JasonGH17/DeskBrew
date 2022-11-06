@@ -9,9 +9,14 @@
                 "-Wall",
                 "-Werror",
                 "-pedantic",
+                "-I${workspaceFolder}/src/Window",
+                "-ID:/VulkanSDK/1.3.224.1/Include",
+                "-LD:/VulkanSDK/1.3.224.1/Bin",
+                "C:/Windows/System32/vulkan-1.dll",
                 "${workspaceFolder}/src/main.cpp",
                 "${workspaceFolder}/src/Window/Win32.cpp",
                 "${workspaceFolder}/src/Window/Window.cpp",
+                "${workspaceFolder}/src/Window/Graphics/Vk.cpp",
                 "-o DeskBrew.exe"
             ],
             "options": {

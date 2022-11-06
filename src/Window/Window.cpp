@@ -1,9 +1,6 @@
 #include "Window.h"
 
-Window::Window()
-{
-    init();
-};
+Window::Window() {};
 
 Window::~Window() {};
 
@@ -35,7 +32,7 @@ LRESULT Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
             FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
             EndPaint(hwnd, &ps);
 
-            printf("Updated window (WIN32)\n");
+            printf("[WIN32] Updated window\n");
         }
         return 0;
 

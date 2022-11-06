@@ -52,7 +52,7 @@ bool Win32::init()
 
     if (!::RegisterClassEx(&wc))
     {
-        printf("ERROR\n");
+        printf("[WIN32] Error registering window class:\n ERROR CODE:%ld\n", GetLastError());
         return false;
     }
 
