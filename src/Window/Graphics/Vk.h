@@ -80,4 +80,7 @@ private:
 
     VkSurfaceKHR surface;
     VkSwapchainKHR swap;
+    std::vector<VkImage> swapImages;
+    VkFormat swapImageFormat;
+    VkExtent2D swapExtent;
 };

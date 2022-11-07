@@ -355,7 +355,6 @@ void VkWindow::createSwapChain() {
         imageCount = scDetails.capabilities.maxImageCount;
     }
 
-
     VkSwapchainCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.surface = surface;
@@ -384,6 +383,14 @@ void VkWindow::createSwapChain() {
         printf("[VK] Error when creating Vulkan swapchain...\n");
         exit(1);
     }
+
+    uint32_t imgCount;
+    vkGetSwapchainImagesKHR(logicalDevice, swap, &imgCount, nullptr);
+    swapImages.resize(imgCount);
+    vkGetSwapchainImagesKHR(logicalDevice, swap, &imgCount, swapImages.data());
+
+    swapImageFormat = format.format;
+    swapExtent = extent;
 
     printf("[VK] Created Vulkan swapchain\n");
 }
