@@ -1,5 +1,8 @@
 #pragma once
 
+// VERY IMPORTANT DEFINE. DO NOT DELETE.
+#define VK_USE_PLATFORM_WIN32_KHR
+
 #include "Window.h"
 #include <vulkan/vulkan.h>
 
@@ -7,6 +10,7 @@
 #include <vector>
 #include <optional>
 #include <string.h>
+#include <set>
 
 #define VK_DEBUG true
 
@@ -15,8 +19,11 @@
 
 struct QueueFamilyIndices {
     std::optional<uint32_t> graphicsFamily;
+    std::optional<uint32_t> presentFamily;
+
+
     bool isComplete() {
-        return graphicsFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value();
     }
 };
 
@@ -31,6 +38,7 @@ public:
     void createInstance();
     void pickPhysicalDevice();
     void createLogicalDevice();
+    void createWindowSurface();
     void cleanup();
 
 private:
@@ -46,5 +54,10 @@ private:
 
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice logicalDevice = VK_NULL_HANDLE;
+    
+    // QUEUES
     VkQueue graphicsQueue;
+    VkQueue presentQueue;
+
+    VkSurfaceKHR surface;
 };

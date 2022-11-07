@@ -2,6 +2,7 @@
 
 VkWindow::VkWindow() {
     createInstance();
+    createWindowSurface();
     pickPhysicalDevice();
     createLogicalDevice();
     if(init()) {
@@ -117,7 +118,7 @@ void VkWindow::createInstance() {
     printf("[VK] Created Vulkan instance\n");
 }
 
-QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
+QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device, VkSurfaceKHR surface) {
     QueueFamilyIndices indices;
 
     uint32_t queueCount = 0;
@@ -127,9 +128,13 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
 
     int i = 0;
     for (VkQueueFamilyProperties queueFamily : queueFamilies) {
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
+        if(presentSupport)
+            indices.presentFamily = i;
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) 
             indices.graphicsFamily = i;
-        }
+        
         if(indices.isComplete())
             break;
         i++;
@@ -139,13 +144,13 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
 }
 
 // Implement better system later on (Or make it changeable by the user via UI)
-bool isDeviceSuitable(VkPhysicalDevice device) {
+bool isDeviceSuitable(VkPhysicalDevice device, VkSurfaceKHR surface) {
     VkPhysicalDeviceProperties deviceProperties;
     VkPhysicalDeviceFeatures deviceFeatures;
     vkGetPhysicalDeviceProperties(device, &deviceProperties);
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
     if(deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader) {
-        QueueFamilyIndices indices = findQueueFamilies(device);
+        QueueFamilyIndices indices = findQueueFamilies(device, surface);
         return indices.isComplete();
     };
     return false;
@@ -164,7 +169,7 @@ void VkWindow::pickPhysicalDevice() {
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
     for(const VkPhysicalDevice& device : devices) {
-        if(isDeviceSuitable(device)) {
+        if(isDeviceSuitable(device, surface)) {
             physicalDevice = device;
             break;
         }
@@ -177,26 +182,31 @@ void VkWindow::pickPhysicalDevice() {
 }
 
 void VkWindow::createLogicalDevice() {
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice, surface);
 
-    VkDeviceQueueCreateInfo queueCreateInfo{};
-    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
-    queueCreateInfo.queueCount = 1;
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfoArr;
+    std::set<uint32_t> uniqueQueues = {indices.graphicsFamily.value(), indices.presentFamily.value()};
     const float queuePrio = 1.0f;
-    queueCreateInfo.pQueuePriorities = &queuePrio;
+    for(uint32_t queue : uniqueQueues) {
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queue;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePrio;
+
+        queueCreateInfoArr.push_back(queueCreateInfo);
+    }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
-
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.pQueueCreateInfos = &queueCreateInfo;
-    createInfo.queueCreateInfoCount = 1;
+    createInfo.pQueueCreateInfos = queueCreateInfoArr.data();
+    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfoArr.size());
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.enabledExtensionCount = 0;
-    if (enableValidationLayers) {
-        createInfo.enabledLayerCount =
-        static_cast<uint32_t>(VALCOUNT);
+
+    if (enableValidationLayers){
+        createInfo.enabledLayerCount = static_cast<uint32_t>(VALCOUNT);
         createInfo.ppEnabledLayerNames = validationLayers;
     } else {
         createInfo.enabledLayerCount = 0;
@@ -208,11 +218,25 @@ void VkWindow::createLogicalDevice() {
     }
 
     vkGetDeviceQueue(logicalDevice, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(logicalDevice, indices.presentFamily.value(), 0, &presentQueue);
     
     printf("[VK] Created Vulkan logical device\n");
 }
 
+void VkWindow::createWindowSurface() {
+    VkWin32SurfaceCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    createInfo.hwnd = getHWND();
+    createInfo.hinstance = GetModuleHandle(nullptr);
+
+    if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
+        printf("[VK] Error when trying to create Vulkan window surface");
+        exit(1);
+    }
+}
+
 void VkWindow::cleanup() {
     vkDestroyDevice(logicalDevice, nullptr);
+    vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
 }
