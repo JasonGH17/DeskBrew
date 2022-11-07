@@ -57,6 +57,7 @@ public:
     void createLogicalDevice();
     void createWindowSurface();
     void createSwapChain();
+    void createImageViews();
     void cleanup();
 
 private:
@@ -83,4 +84,5 @@ private:
     std::vector<VkImage> swapImages;
     VkFormat swapImageFormat;
     VkExtent2D swapExtent;
+    std::vector<VkImageView> swapImageViews;
 };

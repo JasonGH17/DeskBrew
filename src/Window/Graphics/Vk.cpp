@@ -11,6 +11,7 @@ VkWindow::VkWindow() {
     pickPhysicalDevice();
     createLogicalDevice();
     createSwapChain();
+    createImageViews();
     start();
     cleanup();
 }
@@ -395,7 +396,41 @@ void VkWindow::createSwapChain() {
     printf("[VK] Created Vulkan swapchain\n");
 }
 
+void VkWindow::createImageViews() {
+    swapImageViews.resize(swapImages.size());
+
+    for (size_t i = 0; i < swapImages.size(); i++) {
+        VkImageViewCreateInfo createInfo{};
+        createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        createInfo.image = swapImages[i];
+        createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        createInfo.format = swapImageFormat;
+
+        createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+        createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        createInfo.subresourceRange.baseMipLevel = 0;
+        createInfo.subresourceRange.levelCount = 1;
+        createInfo.subresourceRange.baseArrayLayer = 0;
+        createInfo.subresourceRange.layerCount = 1;
+
+        if (vkCreateImageView(logicalDevice, &createInfo, nullptr, &swapImageViews[i]) != VK_SUCCESS) {
+            printf("[VK] Error when creating Vulkan image view...\n");
+            exit(1);
+        }
+    }
+
+    printf("[VK] Created Vulkan image views\n");
+}
+
 void VkWindow::cleanup() {
+    for (auto imageView : swapImageViews) {
+        vkDestroyImageView(logicalDevice, imageView, nullptr);
+    }
+
     vkDestroySwapchainKHR(logicalDevice, swap, nullptr);
     vkDestroyDevice(logicalDevice, nullptr);
     vkDestroySurfaceKHR(instance, surface, nullptr);
