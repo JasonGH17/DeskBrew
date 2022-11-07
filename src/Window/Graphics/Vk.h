@@ -30,6 +30,7 @@ public:
 
     void createInstance();
     void pickPhysicalDevice();
+    void createLogicalDevice();
     void cleanup();
 
 private:
@@ -44,4 +45,6 @@ private:
     #endif
 
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+    VkDevice logicalDevice = VK_NULL_HANDLE;
+    VkQueue graphicsQueue;
 };

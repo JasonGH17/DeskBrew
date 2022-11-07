@@ -3,6 +3,7 @@
 VkWindow::VkWindow() {
     createInstance();
     pickPhysicalDevice();
+    createLogicalDevice();
     if(init()) {
         start();
     } else {
@@ -175,6 +176,43 @@ void VkWindow::pickPhysicalDevice() {
     }
 }
 
+void VkWindow::createLogicalDevice() {
+    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+
+    VkDeviceQueueCreateInfo queueCreateInfo{};
+    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+    queueCreateInfo.queueFamilyIndex = indices.graphicsFamily.value();
+    queueCreateInfo.queueCount = 1;
+    const float queuePrio = 1.0f;
+    queueCreateInfo.pQueuePriorities = &queuePrio;
+
+    VkPhysicalDeviceFeatures deviceFeatures{};
+
+    VkDeviceCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    createInfo.pQueueCreateInfos = &queueCreateInfo;
+    createInfo.queueCreateInfoCount = 1;
+    createInfo.pEnabledFeatures = &deviceFeatures;
+    createInfo.enabledExtensionCount = 0;
+    if (enableValidationLayers) {
+        createInfo.enabledLayerCount =
+        static_cast<uint32_t>(VALCOUNT);
+        createInfo.ppEnabledLayerNames = validationLayers;
+    } else {
+        createInfo.enabledLayerCount = 0;
+    }
+
+    if(vkCreateDevice(physicalDevice, &createInfo, nullptr, &logicalDevice) != VK_SUCCESS) {
+        printf("[VK] Error when creating Vulkan logical device...\n");
+        exit(1);
+    }
+
+    vkGetDeviceQueue(logicalDevice, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    
+    printf("[VK] Created Vulkan logical device\n");
+}
+
 void VkWindow::cleanup() {
+    vkDestroyDevice(logicalDevice, nullptr);
     vkDestroyInstance(instance, nullptr);
 }
