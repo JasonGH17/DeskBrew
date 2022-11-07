@@ -116,19 +116,6 @@ void VkWindow::createInstance() {
     printf("[VK] Created Vulkan instance\n");
 }
 
-// Implement better system later on (Or make it changeable by the user via UI)
-bool isDeviceSuitable(VkPhysicalDevice device) {
-    VkPhysicalDeviceProperties deviceProperties;
-    VkPhysicalDeviceFeatures deviceFeatures;
-    vkGetPhysicalDeviceProperties(device, &deviceProperties);
-    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
-    if(deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader) {
-        QueueFamilyIndices indices = findQueueFamilies(device);
-        return indices.isComplete();
-    };
-    return false;
-}
-
 QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
     QueueFamilyIndices indices;
 
@@ -148,6 +135,19 @@ QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) {
     }
 
     return indices;
+}
+
+// Implement better system later on (Or make it changeable by the user via UI)
+bool isDeviceSuitable(VkPhysicalDevice device) {
+    VkPhysicalDeviceProperties deviceProperties;
+    VkPhysicalDeviceFeatures deviceFeatures;
+    vkGetPhysicalDeviceProperties(device, &deviceProperties);
+    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+    if(deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader) {
+        QueueFamilyIndices indices = findQueueFamilies(device);
+        return indices.isComplete();
+    };
+    return false;
 }
 
 void VkWindow::pickPhysicalDevice() {
