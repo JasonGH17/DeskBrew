@@ -4,6 +4,8 @@
 #define UNICODE
 #endif
 
+#define NOMINMAX
+
 #include <windows.h>
 #include <stdio.h>
 

@@ -58,6 +58,7 @@ public:
     void createWindowSurface();
     void createSwapChain();
     void createImageViews();
+    void createGraphicsPipeline();
     void cleanup();
 
 private:

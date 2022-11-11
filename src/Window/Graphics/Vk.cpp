@@ -1,5 +1,7 @@
 #include "Vk.h"
 
+#include "Utils/Shader.h"
+
 VkWindow::VkWindow() {
     createInstance();
     if(init()) {
@@ -12,6 +14,7 @@ VkWindow::VkWindow() {
     createLogicalDevice();
     createSwapChain();
     createImageViews();
+    createGraphicsPipeline();
     start();
     cleanup();
 }
@@ -424,6 +427,31 @@ void VkWindow::createImageViews() {
     }
 
     printf("[VK] Created Vulkan image views\n");
+}
+
+void VkWindow::createGraphicsPipeline() {
+    VkShaderModule vertexShader = loadShader(logicalDevice, "./vertex.spv");
+    fprintf(stdout, "[VK] Successfully loaded in the vertex shader\n");
+    VkShaderModule fragmentShader = loadShader(logicalDevice, "./fragment.spv");
+    fprintf(stdout, "[VK] Successfully loaded in the fragment shader\n");
+
+    VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
+    vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertShaderStageInfo.module = vertexShader;
+    vertShaderStageInfo.pName = "main";
+
+    VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
+    fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragShaderStageInfo.module = fragmentShader;
+    fragShaderStageInfo.pName = "main";
+
+    VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+    (void)shaderStages;
+
+    vkDestroyShaderModule(logicalDevice, vertexShader, nullptr);
+    vkDestroyShaderModule(logicalDevice, fragmentShader, nullptr);
 }
 
 void VkWindow::cleanup() {

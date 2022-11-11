@@ -17,7 +17,7 @@
                 "${workspaceFolder}/src/Window/Win32.cpp",
                 "${workspaceFolder}/src/Window/Window.cpp",
                 "${workspaceFolder}/src/Window/Graphics/Vk.cpp",
-                "-o DeskBrew.exe"
+                "-oDeskBrew.exe"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/src"
