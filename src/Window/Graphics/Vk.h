@@ -58,6 +58,8 @@ public:
     void createWindowSurface();
     void createSwapChain();
     void createImageViews();
+    void createGraphicsPipelineCache();
+    void createRenderPass();
     void createGraphicsPipeline();
     void cleanup();
 
@@ -86,4 +88,10 @@ private:
     VkFormat swapImageFormat;
     VkExtent2D swapExtent;
     std::vector<VkImageView> swapImageViews;
+
+    // GRAPHICS PIPELINE
+    VkPipelineLayout pipelineLayout;
+    VkPipelineCache pipelineCache;
+    VkRenderPass renderPass;
+    VkPipeline graphicsPipeline;
 };
