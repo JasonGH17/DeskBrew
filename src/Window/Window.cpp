@@ -16,13 +16,13 @@ LRESULT Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
     switch (msg)
     {
     case WM_DESTROY:
-        printf("[WIN32] Destroyed window\n");
+        fprintf(stdout, "[WIN32] Destroyed window\n");
         running = false;
         PostQuitMessage(0);
         return 0;
 
     case WM_CREATE:
-        printf("[WIN32] Created new window\n");
+        fprintf(stdout, "[WIN32] Created new window\n");
         return 0;
 
     case WM_PAINT:
@@ -32,7 +32,7 @@ LRESULT Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
             FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
             EndPaint(hwnd, &ps);
 
-            printf("[WIN32] Updated window\n");
+            fprintf(stdout, "[WIN32] Updated window\n");
         }
         return 0;
 

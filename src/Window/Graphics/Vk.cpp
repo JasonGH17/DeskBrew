@@ -7,7 +7,7 @@ VkWindow::VkWindow() {
     if(init()) {
         ::SetWindowLong(getHWND(), GWL_STYLE, GetWindowLong(getHWND(), GWL_STYLE)&~WS_SIZEBOX);
     } else {
-        printf("[Window] Couldn't initialize WIN32 window instance\n");
+        fprintf(stderr, "[Window] Couldn't initialize WIN32 window instance\n");
     };
     createWindowSurface();
     pickPhysicalDevice();
@@ -28,9 +28,9 @@ bool VkWindow::checkInstanceExtSupport() {
     vkEnumerateInstanceExtensionProperties(nullptr, &extCount, extProps.data());
 
     if(VK_DEBUG) {
-        printf("[VK_DEBUG] (%d) Available vulkan instance extensions:\n", extCount);
+        fprintf(stdout, "[VK_DEBUG] (%d) Available vulkan instance extensions:\n", extCount);
         for (VkExtensionProperties &ext : extProps)
-            printf("\t- %s\n", ext.extensionName);
+            fprintf(stdout, "\t- %s\n", ext.extensionName);
     }
 
     if(EXTCOUNT > extCount) {
@@ -59,9 +59,9 @@ bool VkWindow::checkValidationLayersSupport() {
     vkEnumerateInstanceLayerProperties(&valCount, valProps.data());
 
     if(VK_DEBUG) {
-        printf("[VK_DEBUG] (%d) Available vulkan validation layers:\n", valCount);
+        fprintf(stdout, "[VK_DEBUG] (%d) Available vulkan validation layers:\n", valCount);
         for (VkLayerProperties &valLayer : valProps)
-            printf("\t- %s\n", valLayer.layerName);
+            fprintf(stdout, "\t- %s\n", valLayer.layerName);
     }
 
     if(VALCOUNT > valCount) {
@@ -85,15 +85,15 @@ bool VkWindow::checkValidationLayersSupport() {
 
 void VkWindow::createInstance() {
     if(enableValidationLayers && !checkValidationLayersSupport()) {
-        printf("[VK_DEBUG] Some validation layers aren't supported on this system...\n");
+        fprintf(stderr, "[VK_DEBUG] Some validation layers aren't supported on this system...\n");
         exit(1);
     }
     if(!checkInstanceExtSupport()) {
-        printf("[VK] Some needed Vulkan instance extensions aren't supported on this system...\n");
+        fprintf(stderr, "[VK] Some needed Vulkan instance extensions aren't supported on this system...\n");
         exit(1);
     }
 
-    printf("[VK] Creating instance...\n");
+    fprintf(stdout, "[VK] Creating instance...\n");
 
     VkApplicationInfo appInfo{};
 
@@ -121,7 +121,7 @@ void VkWindow::createInstance() {
         throw std::runtime_error("[VK] Error when creating Vulkan instance\n");
     };
     
-    printf("[VK] Created Vulkan instance\n");
+    fprintf(stdout, "[VK] Created Vulkan instance\n");
 }
 
 QueueFamilyIndices VkWindow::findQueueFamilies(VkPhysicalDevice device) {
@@ -218,7 +218,7 @@ void VkWindow::pickPhysicalDevice() {
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
     
     if(deviceCount == 0) {
-        printf("[VK] No devices support Vulkan on this machine...\n");
+        fprintf(stderr, "[VK] No devices support Vulkan on this machine...\n");
         exit(1);
     }
 
@@ -226,11 +226,11 @@ void VkWindow::pickPhysicalDevice() {
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
     if(VK_DEBUG) { 
-        printf("[VK_DEBUG] (%d) Available physical devices found:\n", deviceCount);
+        fprintf(stdout, "[VK_DEBUG] (%d) Available physical devices found:\n", deviceCount);
         for(const VkPhysicalDevice& device : devices) {
             VkPhysicalDeviceProperties deviceProperties;
             vkGetPhysicalDeviceProperties(device, &deviceProperties);
-            printf("\t- %s\n", deviceProperties.deviceName);
+            fprintf(stdout, "\t- %s\n", deviceProperties.deviceName);
         }
 
         for(const VkPhysicalDevice& device : devices) {
@@ -242,11 +242,11 @@ void VkWindow::pickPhysicalDevice() {
     }
 
     if(physicalDevice == VK_NULL_HANDLE) {
-        printf("[VK] No suitable Vulkan compliant devices were found on this machine...\n");
+        fprintf(stderr, "[VK] No suitable Vulkan compliant devices were found on this machine...\n");
         exit(1);
     }
 
-    printf("[VK] Picked graphics device\n");
+    fprintf(stdout, "[VK] Picked graphics device\n");
 }
 
 void VkWindow::createLogicalDevice() {
@@ -282,14 +282,14 @@ void VkWindow::createLogicalDevice() {
     }
 
     if(vkCreateDevice(physicalDevice, &createInfo, nullptr, &logicalDevice) != VK_SUCCESS) {
-        printf("[VK] Error when creating Vulkan logical device...\n");
+        fprintf(stderr, "[VK] Error when creating Vulkan logical device...\n");
         exit(1);
     }
 
     vkGetDeviceQueue(logicalDevice, indices.graphicsFamily.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(logicalDevice, indices.presentFamily.value(), 0, &presentQueue);
     
-    printf("[VK] Created Vulkan logical device\n");
+    fprintf(stdout, "[VK] Created Vulkan logical device\n");
 }
 
 void VkWindow::createWindowSurface() {
@@ -299,11 +299,11 @@ void VkWindow::createWindowSurface() {
     createInfo.hinstance = GetModuleHandle(nullptr);
 
     if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
-        printf("[VK] Error when trying to create Vulkan window surface");
+        fprintf(stderr, "[VK] Error when trying to create Vulkan window surface");
         exit(1);
     }
 
-    printf("[VK] Created window surface\n");
+    fprintf(stdout, "[VK] Created window surface\n");
 }
 
 VkSurfaceFormatKHR VkWindow::pickSurfaceFormat(std::vector<VkSurfaceFormatKHR>& formats) {
@@ -384,7 +384,7 @@ void VkWindow::createSwapChain() {
     createInfo.oldSwapchain = VK_NULL_HANDLE; // WILL ADD A HANDLER LATER 
 
     if(vkCreateSwapchainKHR(logicalDevice, &createInfo, nullptr, &swap) != VK_SUCCESS) {
-        printf("[VK] Error when creating Vulkan swapchain...\n");
+        fprintf(stderr, "[VK] Error when creating Vulkan swapchain...\n");
         exit(1);
     }
 
@@ -396,7 +396,7 @@ void VkWindow::createSwapChain() {
     swapImageFormat = format.format;
     swapExtent = extent;
 
-    printf("[VK] Created Vulkan swapchain\n");
+    fprintf(stdout, "[VK] Created Vulkan swapchain\n");
 }
 
 void VkWindow::createImageViews() {
@@ -421,12 +421,12 @@ void VkWindow::createImageViews() {
         createInfo.subresourceRange.layerCount = 1;
 
         if (vkCreateImageView(logicalDevice, &createInfo, nullptr, &swapImageViews[i]) != VK_SUCCESS) {
-            printf("[VK] Error when creating Vulkan image view...\n");
+            fprintf(stderr, "[VK] Error when creating Vulkan image view...\n");
             exit(1);
         }
     }
 
-    printf("[VK] Created Vulkan image views\n");
+    fprintf(stdout, "[VK] Created Vulkan image views\n");
 }
 
 void VkWindow::createGraphicsPipelineCache() {

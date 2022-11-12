@@ -9,7 +9,7 @@ std::vector<char> readFile(const char* filepath) {
     std::ifstream file(filepath, std::ios::ate | std::ios::binary);
 
     if(!file.is_open()) {
-        printf("[UTIL] Unable to open file: %s\n", filepath);
+        fprintf(stderr, "[UTIL] Unable to open file: %s\n", filepath);
         exit(1);
     }
 
