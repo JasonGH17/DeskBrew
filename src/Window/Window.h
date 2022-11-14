@@ -12,7 +12,9 @@ public:
 
     void start();
 
+    virtual void mainLoop() = 0;
     virtual void paint() = 0;
+    virtual void onClose() = 0;
 
     virtual LRESULT handleMessage(UINT msg, WPARAM wParam, LPARAM lParam) override;
 };

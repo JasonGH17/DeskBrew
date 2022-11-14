@@ -8,7 +8,11 @@ void Window::start() {
     while(isRunning()) {
         paint();
         broadcast();
+
+        mainLoop();
     }
+
+    onClose();
 }
 
 LRESULT Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){

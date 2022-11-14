@@ -67,7 +67,10 @@ public:
     void cleanup();
 
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    
     virtual void paint() override;
+    virtual void onClose() override;
+    virtual void mainLoop() override;
 
 private:
     VkInstance instance;

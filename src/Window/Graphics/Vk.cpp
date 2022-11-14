@@ -19,7 +19,6 @@ VkWindow::VkWindow() {
     createCommandPool();
     createSyncObjects();
     start();
-    vkDeviceWaitIdle(logicalDevice);
     cleanup();
 }
 
@@ -792,4 +791,13 @@ void VkWindow::paint() {
     presentInfo.pImageIndices = &imageIndex;
 
     vkQueuePresentKHR(presentQueue, &presentInfo);
+}
+
+void VkWindow::onClose() {
+    vkDeviceWaitIdle(logicalDevice);
+    printf("Closed");
+}
+
+void VkWindow::mainLoop() {
+    
 }
