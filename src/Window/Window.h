@@ -12,5 +12,7 @@ public:
 
     void start();
 
+    virtual void paint() = 0;
+
     virtual LRESULT handleMessage(UINT msg, WPARAM wParam, LPARAM lParam) override;
 };

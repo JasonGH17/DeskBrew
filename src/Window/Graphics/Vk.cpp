@@ -15,7 +15,11 @@ VkWindow::VkWindow() {
     createSwapChain();
     createImageViews();
     createGraphicsPipeline();
+    createFramebuffers();
+    createCommandPool();
+    createSyncObjects();
     start();
+    vkDeviceWaitIdle(logicalDevice);
     cleanup();
 }
 
@@ -462,12 +466,22 @@ void VkWindow::createRenderPass() {
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
 
+    VkSubpassDependency dependency{};
+    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependency.dstSubpass = 0;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcAccessMask = 0;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
     VkRenderPassCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
     createInfo.subpassCount = 1;
     createInfo.pSubpasses = &subpass;
     createInfo.attachmentCount = 1;
     createInfo.pAttachments = &colorAttachment;
+    createInfo.dependencyCount = 1;
+    createInfo.pDependencies = &dependency;
 
     if(vkCreateRenderPass(logicalDevice, &createInfo, nullptr, &renderPass) != VK_SUCCESS) {
         fprintf(stderr, "[VK] Failed to create graphics pipeline render pass...\n");
@@ -567,14 +581,14 @@ void VkWindow::createGraphicsPipeline() {
     colorBlending.blendConstants[2] = 0.0f;
     colorBlending.blendConstants[3] = 0.0f;
 
-    std::vector<VkDynamicState> dynamicStates = {
+    /* std::vector<VkDynamicState> dynamicStates = {
         VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_LINE_WIDTH
     };
     VkPipelineDynamicStateCreateInfo dynamicState{};
     dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
     dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
-    dynamicState.pDynamicStates = dynamicStates.data();
+    dynamicState.pDynamicStates = dynamicStates.data(); */
 
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -596,7 +610,7 @@ void VkWindow::createGraphicsPipeline() {
     createInfo.pRasterizationState = &rasterizer;
     createInfo.pMultisampleState = &multisampling;
     createInfo.pColorBlendState = &colorBlending;
-    createInfo.pDynamicState = &dynamicState;
+    createInfo.pDynamicState = nullptr;
     createInfo.layout = pipelineLayout;
     createInfo.pStages = shaderStages;
     createInfo.stageCount = (sizeof(shaderStages)) / (sizeof(VkPipelineShaderStageCreateInfo));
@@ -606,17 +620,95 @@ void VkWindow::createGraphicsPipeline() {
     createInfo.subpass = 0;
 
     createGraphicsPipelineCache();
-    if(vkCreateGraphicsPipelines(logicalDevice, pipelineCache, 1, &createInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+    if(vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &createInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
         fprintf(stderr, "[VK] Failed to create graphics pipeline...\n");
         exit(1);
     }
     fprintf(stdout, "[VK] Created graphics pipeline successfully\n");
-    
+
     vkDestroyShaderModule(logicalDevice, vertexShader, nullptr);
     vkDestroyShaderModule(logicalDevice, fragmentShader, nullptr);
 }
 
+void VkWindow::createFramebuffers() {
+    framebuffers.resize(swapImageViews.size());
+
+    for (size_t i = 0; i < swapImageViews.size(); i++) {
+        VkImageView attachments[] = {
+            swapImageViews[i]
+        };
+
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.attachmentCount = 1;
+        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.width = swapExtent.width;
+        framebufferInfo.height = swapExtent.height;
+        framebufferInfo.layers = 1;
+
+        if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS) {
+            fprintf(stderr, "[VK] Failed to create framebuffers...\n");
+            exit(1);
+        }
+
+        fprintf(stdout, "[VK] Created framebuffer: %d\n", (uint32_t)i);
+    }
+}
+
+void VkWindow::createCommandPool() {
+    VkCommandPoolCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    createInfo.queueFamilyIndex = findQueueFamilies(physicalDevice).graphicsFamily.value();
+    createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+    if(vkCreateCommandPool(logicalDevice, &createInfo, nullptr, &commandPool) != VK_SUCCESS) {
+        fprintf(stderr, "[VK] Failed to create command pool...\n");
+        exit(1);
+    }
+    fprintf(stdout, "[VK] Created command pool\n");
+
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = commandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = 1;
+    if (vkAllocateCommandBuffers(logicalDevice, &allocInfo, &commandBuffer) != VK_SUCCESS) {
+        fprintf(stderr, "[VK] Failed to create command buffer...\n");
+        exit(1);
+    }
+    fprintf(stdout, "[VK] Created command buffer\n");
+}
+
+void VkWindow::createSyncObjects() {
+    VkSemaphoreCreateInfo semaphoreInfo{};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+    if (
+        vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS || 
+        vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS ||
+        vkCreateFence(logicalDevice, &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS
+    ) {
+        fprintf(stderr, "[VK] Failed to create semaphores...\n");
+        exit(1);
+    }
+}
+
 void VkWindow::cleanup() {
+    vkDestroySemaphore(logicalDevice, imageAvailableSemaphore, nullptr);
+    vkDestroySemaphore(logicalDevice, renderFinishedSemaphore, nullptr);
+    vkDestroyFence(logicalDevice, inFlightFence, nullptr);
+
+    vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
+
+    for (auto framebuffer : framebuffers) {
+        vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
+    }
+
     vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
     vkDestroyPipelineCache(logicalDevice, pipelineCache, nullptr);
     vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
@@ -631,4 +723,73 @@ void VkWindow::cleanup() {
     vkDestroyDevice(logicalDevice, nullptr);
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
+}
+
+void VkWindow::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
+        fprintf(stderr, "[VK] Failed to start up the command buffer...\n");
+        exit(1);
+    }
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass;
+    renderPassInfo.framebuffer = framebuffers[imageIndex];
+    renderPassInfo.renderArea.offset = {0, 0};
+    renderPassInfo.renderArea.extent = swapExtent;
+    VkClearValue clearColor = {{{0.0f, 0.0f, 0.0f, 1.0f}}};
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearColor;
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+    vkCmdEndRenderPass(commandBuffer);
+    if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+        fprintf(stderr, "[VK] Failed to end command buffer successfully");
+        exit(1);
+    }
+}
+
+void VkWindow::paint() {
+    vkWaitForFences(logicalDevice, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
+    vkResetFences(logicalDevice, 1, &inFlightFence);
+
+    uint32_t imageIndex;
+    vkAcquireNextImageKHR(logicalDevice, swap, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    vkResetCommandBuffer(commandBuffer, 0);
+    recordCommandBuffer(commandBuffer, imageIndex);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    submitInfo.waitSemaphoreCount = 1;
+    submitInfo.pWaitSemaphores = waitSemaphores;
+    submitInfo.pWaitDstStageMask = waitStages;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+    VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+    submitInfo.signalSemaphoreCount = 1;
+    submitInfo.pSignalSemaphores = signalSemaphores;
+
+    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) {
+        fprintf(stderr, "[VK] Failed to submit draw command buffer...\n");
+        exit(1);
+    }
+
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount = 1;
+    presentInfo.pWaitSemaphores = signalSemaphores;
+    VkSwapchainKHR swapChains[] = {swap};
+    presentInfo.swapchainCount = 1;
+    presentInfo.pSwapchains = swapChains;
+    presentInfo.pImageIndices = &imageIndex;
+
+    vkQueuePresentKHR(presentQueue, &presentInfo);
 }

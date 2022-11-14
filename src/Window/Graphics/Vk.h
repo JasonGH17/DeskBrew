@@ -61,7 +61,13 @@ public:
     void createGraphicsPipelineCache();
     void createRenderPass();
     void createGraphicsPipeline();
+    void createFramebuffers();
+    void createCommandPool();
+    void createSyncObjects();
     void cleanup();
+
+    void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+    virtual void paint() override;
 
 private:
     VkInstance instance;
@@ -94,4 +100,12 @@ private:
     VkPipelineCache pipelineCache;
     VkRenderPass renderPass;
     VkPipeline graphicsPipeline;
+
+    std::vector<VkFramebuffer> framebuffers;
+    VkCommandPool commandPool;
+    VkCommandBuffer commandBuffer;
+
+    VkSemaphore imageAvailableSemaphore;
+    VkSemaphore renderFinishedSemaphore;
+    VkFence inFlightFence;
 };
