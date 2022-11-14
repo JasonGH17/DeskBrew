@@ -7,7 +7,6 @@ Window::~Window() {};
 void Window::start() {
     while(isRunning()) {
         paint();
-        printf("Cycle\n");
         broadcast();
     }
 }

@@ -620,7 +620,7 @@ void VkWindow::createGraphicsPipeline() {
     createInfo.subpass = 0;
 
     createGraphicsPipelineCache();
-    if(vkCreateGraphicsPipelines(logicalDevice, VK_NULL_HANDLE, 1, &createInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+    if(vkCreateGraphicsPipelines(logicalDevice, pipelineCache, 1, &createInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
         fprintf(stderr, "[VK] Failed to create graphics pipeline...\n");
         exit(1);
     }
