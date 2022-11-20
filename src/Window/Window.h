@@ -15,6 +15,8 @@ public:
     virtual void mainLoop() = 0;
     virtual void paint() = 0;
     virtual void onClose() = 0;
+    virtual void onResize() = 0;
+    virtual void onMinimize() = 0;
 
     virtual LRESULT handleMessage(UINT msg, WPARAM wParam, LPARAM lParam) override;
 };

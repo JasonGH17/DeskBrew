@@ -73,6 +73,8 @@ public:
 
     virtual void paint() override;
     virtual void onClose() override;
+    virtual void onResize() override;
+    virtual void onMinimize() override;
     virtual void mainLoop() override;
 
 private:
@@ -114,4 +116,7 @@ private:
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
     VkFence inFlightFence;
+
+    bool resized;
+    bool minimized;
 };

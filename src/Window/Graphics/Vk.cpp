@@ -4,9 +4,7 @@
 
 VkWindow::VkWindow() {
     createInstance();
-    if(init()) {
-        //::SetWindowLong(getHWND(), GWL_STYLE, GetWindowLong(getHWND(), GWL_STYLE)&~WS_SIZEBOX);
-    } else {
+    if(!init()) {
         fprintf(stderr, "[Window] Couldn't initialize WIN32 window instance\n");
     };
     createWindowSurface();
@@ -765,12 +763,15 @@ void VkWindow::recreateSwapChain() {
 }
 
 void VkWindow::paint() {
+    if (minimized)
+        return;
+
     vkWaitForFences(logicalDevice, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
-    vkResetFences(logicalDevice, 1, &inFlightFence);
 
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(logicalDevice, swap, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || resized) {
+        resized = false;
         recreateSwapChain();
         return;
     } else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -778,6 +779,7 @@ void VkWindow::paint() {
         exit(1);
     }
 
+    vkResetFences(logicalDevice, 1, &inFlightFence);
     vkResetCommandBuffer(commandBuffer, 0);
     recordCommandBuffer(commandBuffer, imageIndex);
 
@@ -813,6 +815,15 @@ void VkWindow::paint() {
 
 void VkWindow::onClose() {
     vkDeviceWaitIdle(logicalDevice);
+}
+
+void VkWindow::onResize() {
+    resized = true;
+    minimized = false;
+}
+
+void VkWindow::onMinimize() {
+    minimized = true;
 }
 
 void VkWindow::mainLoop() {

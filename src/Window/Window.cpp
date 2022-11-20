@@ -41,6 +41,15 @@ LRESULT Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
         }
         return 0;
 
+    case WM_SIZE:
+        {
+            if(wParam == SIZE_MINIMIZED) {
+                onMinimize();
+            } else {
+                onResize();
+            }
+        }
+
     default:
         return DefWindowProc(hwnd, msg, wParam, lParam);
     }
