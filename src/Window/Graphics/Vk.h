@@ -65,9 +65,12 @@ public:
     void createCommandPool();
     void createSyncObjects();
     void cleanup();
+    void cleanupSwap();
 
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
-    
+
+    void recreateSwapChain();
+
     virtual void paint() override;
     virtual void onClose() override;
     virtual void mainLoop() override;

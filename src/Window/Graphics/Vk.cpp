@@ -5,7 +5,7 @@
 VkWindow::VkWindow() {
     createInstance();
     if(init()) {
-        ::SetWindowLong(getHWND(), GWL_STYLE, GetWindowLong(getHWND(), GWL_STYLE)&~WS_SIZEBOX);
+        //::SetWindowLong(getHWND(), GWL_STYLE, GetWindowLong(getHWND(), GWL_STYLE)&~WS_SIZEBOX);
     } else {
         fprintf(stderr, "[Window] Couldn't initialize WIN32 window instance\n");
     };
@@ -701,27 +701,26 @@ void VkWindow::cleanup() {
     vkDestroySemaphore(logicalDevice, imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(logicalDevice, renderFinishedSemaphore, nullptr);
     vkDestroyFence(logicalDevice, inFlightFence, nullptr);
-
     vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
+    cleanupSwap();
+    vkDestroyDevice(logicalDevice, nullptr);
+    vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroyInstance(instance, nullptr);
+}
 
+void VkWindow::cleanupSwap() {
     for (auto framebuffer : framebuffers) {
         vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
     }
-
     vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
     vkDestroyPipelineCache(logicalDevice, pipelineCache, nullptr);
     vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
     vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
-
     for (auto imageView : swapImageViews)
     {
         vkDestroyImageView(logicalDevice, imageView, nullptr);
     }
-
     vkDestroySwapchainKHR(logicalDevice, swap, nullptr);
-    vkDestroyDevice(logicalDevice, nullptr);
-    vkDestroySurfaceKHR(instance, surface, nullptr);
-    vkDestroyInstance(instance, nullptr);
 }
 
 void VkWindow::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
@@ -754,12 +753,31 @@ void VkWindow::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     }
 }
 
+void VkWindow::recreateSwapChain() {
+    vkDeviceWaitIdle(logicalDevice);
+    cleanupSwap();
+
+    createSwapChain();
+    createImageViews();
+    createRenderPass();
+    createGraphicsPipeline();
+    createFramebuffers();
+}
+
 void VkWindow::paint() {
     vkWaitForFences(logicalDevice, 1, &inFlightFence, VK_TRUE, UINT64_MAX);
     vkResetFences(logicalDevice, 1, &inFlightFence);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(logicalDevice, swap, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(logicalDevice, swap, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
+    if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+        recreateSwapChain();
+        return;
+    } else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        fprintf(stderr, "[VK] Something went wrong acquiring a new image to render...\nVkResult Code: %d\n", result);
+        exit(1);
+    }
+
     vkResetCommandBuffer(commandBuffer, 0);
     recordCommandBuffer(commandBuffer, imageIndex);
 
@@ -795,7 +813,6 @@ void VkWindow::paint() {
 
 void VkWindow::onClose() {
     vkDeviceWaitIdle(logicalDevice);
-    printf("Closed");
 }
 
 void VkWindow::mainLoop() {
