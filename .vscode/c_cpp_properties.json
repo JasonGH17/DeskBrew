@@ -4,7 +4,8 @@
             "name": "Win32",
             "includePath": [
                 "D:/VulkanSDK/1.3.224.1/Include",
-                "${workspaceFolder}/src/Window"
+                "${workspaceFolder}/src/Window",
+                "${workspaceFolder}/src/Math"
             ],
             "defines": [
                 "_DEBUG",

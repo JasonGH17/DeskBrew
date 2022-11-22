@@ -1,7 +1,5 @@
 #include "Vk.h"
 
-#include "Utils/Shader.h"
-
 VkWindow::VkWindow() {
     createInstance();
     if(!init()) {
@@ -14,6 +12,7 @@ VkWindow::VkWindow() {
     createImageViews();
     createGraphicsPipeline();
     createFramebuffers();
+    createVertexBuffer();
     createCommandPool();
     createSyncObjects();
     start();
@@ -509,8 +508,11 @@ void VkWindow::createGraphicsPipeline() {
 
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
     vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount = 0;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
+    vertexInputInfo.vertexBindingDescriptionCount = 1;
+    vertexInputInfo.vertexAttributeDescriptionCount = 2;
+    VkVertexInputBindingDescription desc = vert::getBindingDesc();
+    vertexInputInfo.pVertexBindingDescriptions = &desc;
+    vertexInputInfo.pVertexAttributeDescriptions = vert::getAttrDesc();
 
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
@@ -677,6 +679,43 @@ void VkWindow::createCommandPool() {
     fprintf(stdout, "[VK] Created command buffer\n");
 }
 
+void VkWindow::createBuffer(VkBufferUsageFlags usage, uint64_t size, VkMemoryPropertyFlags props, VkBuffer &buff, VkDeviceMemory &buffMem) {
+    VkBufferCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    createInfo.size = size;
+    createInfo.usage = usage;
+    createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(logicalDevice, &createInfo, nullptr, &buff) != VK_SUCCESS) {
+        fprintf(stderr, "[VK] Failed to create Vulkan vertex buffer...\n");
+        exit(1);
+    }
+
+    VkMemoryRequirements memReq;
+    vkGetBufferMemoryRequirements(logicalDevice, vertexBuffer, &memReq);
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memReq.size;
+    allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memReq.memoryTypeBits, props);
+
+    if(vkAllocateMemory(logicalDevice, &allocInfo, nullptr, &buffMem) != VK_SUCCESS) {
+        fprintf(stderr, "[VK] Failed to allocate memory for the Vulkan vertex buffer...\n");
+        exit(1);
+    }
+
+    vkBindBufferMemory(logicalDevice, buff, buffMem, 0);
+}
+
+void VkWindow::createVertexBuffer() {
+    uint64_t buffSize = sizeof(vertices[0]) * vertices.size();
+    createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, buffSize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer, vertexBufferMem);
+
+    void *data;
+    vkMapMemory(logicalDevice, vertexBufferMem, 0, buffSize, 0, &data);
+    memcpy(data, vertices.data(), buffSize);
+    vkUnmapMemory(logicalDevice, vertexBufferMem);
+}
+
 void VkWindow::createSyncObjects() {
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -701,6 +740,8 @@ void VkWindow::cleanup() {
     vkDestroyFence(logicalDevice, inFlightFence, nullptr);
     vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
     cleanupSwap();
+    vkDestroyBuffer(logicalDevice, vertexBuffer, nullptr);
+    vkFreeMemory(logicalDevice, vertexBufferMem, nullptr);
     vkDestroyDevice(logicalDevice, nullptr);
     vkDestroySurfaceKHR(instance, surface, nullptr);
     vkDestroyInstance(instance, nullptr);
@@ -742,6 +783,9 @@ void VkWindow::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+    VkBuffer vertexBuffs[] = {vertexBuffer};
+    uint64_t offsets[] = {0};
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffs, offsets);
     vkCmdDraw(commandBuffer, 3, 1, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);

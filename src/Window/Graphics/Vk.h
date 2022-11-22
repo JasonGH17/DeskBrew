@@ -6,7 +6,6 @@
 #include "Window.h"
 #include <vulkan/vulkan.h>
 
-#include <stdexcept>
 #include <vector>
 #include <optional>
 #include <string.h>
@@ -14,6 +13,10 @@
 #include <cstdint>
 #include <limits>
 #include <algorithm>
+
+#include "Utils/Shader.h"
+#include "Utils/Vertex.h"
+#include "Utils/BufferMemory.h"
 
 #define VK_DEBUG true
 
@@ -34,6 +37,12 @@ struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
+};
+
+const std::vector<vert> vertices = {
+    {{.0f, -.5f}, {1.0f, 0.0f, 0.0f}},
+    {{.5f, .5f}, {0.0f, 1.0f, 0.0f}},
+    {{-.5f, .5f}, {0.0f, 0.0f, 1.0f}}
 };
 
 class VkWindow : public Window {
@@ -70,6 +79,9 @@ public:
     void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
 
     void recreateSwapChain();
+    
+    void createBuffer(VkBufferUsageFlags usage, uint64_t size, VkMemoryPropertyFlags props, VkBuffer &buff, VkDeviceMemory &buffMem);
+    void createVertexBuffer();
 
     virtual void paint() override;
     virtual void onClose() override;
@@ -116,6 +128,9 @@ private:
     VkSemaphore imageAvailableSemaphore;
     VkSemaphore renderFinishedSemaphore;
     VkFence inFlightFence;
+
+    VkBuffer vertexBuffer;
+    VkDeviceMemory vertexBufferMem;
 
     bool resized;
     bool minimized;

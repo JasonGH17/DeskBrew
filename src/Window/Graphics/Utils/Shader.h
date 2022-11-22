@@ -5,7 +5,7 @@
 #include <vector>
 #include <fstream>
 
-std::vector<char> readFile(const char* filepath) {
+inline std::vector<char> readFile(const char* filepath) {
     std::ifstream file(filepath, std::ios::ate | std::ios::binary);
 
     if(!file.is_open()) {
@@ -23,7 +23,7 @@ std::vector<char> readFile(const char* filepath) {
     return buff;
 }
 
-VkShaderModule loadShader(VkDevice& device, const char* filepath) {
+inline VkShaderModule loadShader(VkDevice& device, const char* filepath) {
     std::vector<char> file = readFile(filepath);
 
     VkShaderModuleCreateInfo createInfo{};
