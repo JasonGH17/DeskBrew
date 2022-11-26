@@ -12,9 +12,9 @@ VkWindow::VkWindow() {
     createImageViews();
     createGraphicsPipeline();
     createFramebuffers();
-    createVertexBuffer();
     createCommandPool();
     createSyncObjects();
+    createVertexBuffer();
     start();
     cleanup();
 }
@@ -692,7 +692,7 @@ void VkWindow::createBuffer(VkBufferUsageFlags usage, uint64_t size, VkMemoryPro
     }
 
     VkMemoryRequirements memReq;
-    vkGetBufferMemoryRequirements(logicalDevice, vertexBuffer, &memReq);
+    vkGetBufferMemoryRequirements(logicalDevice, buff, &memReq);
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memReq.size;
@@ -708,12 +708,49 @@ void VkWindow::createBuffer(VkBufferUsageFlags usage, uint64_t size, VkMemoryPro
 
 void VkWindow::createVertexBuffer() {
     uint64_t buffSize = sizeof(vertices[0]) * vertices.size();
-    createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, buffSize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertexBuffer, vertexBufferMem);
+    
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMem;
+    createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, buffSize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMem);
+
+    fprintf(stdout, "[VK] Created the vertex buffer\n");
 
     void *data;
-    vkMapMemory(logicalDevice, vertexBufferMem, 0, buffSize, 0, &data);
+    vkMapMemory(logicalDevice, stagingBufferMem, 0, buffSize, 0, &data);
     memcpy(data, vertices.data(), buffSize);
-    vkUnmapMemory(logicalDevice, vertexBufferMem);
+    vkUnmapMemory(logicalDevice, stagingBufferMem);
+    
+    createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, buffSize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMem);
+    copyBuffer(stagingBuffer, vertexBuffer, buffSize);
+    vkDestroyBuffer(logicalDevice, stagingBuffer, nullptr);
+    vkFreeMemory(logicalDevice, stagingBufferMem, nullptr);
+}
+
+void VkWindow::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = commandPool;
+    allocInfo.commandBufferCount = 1;
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(logicalDevice, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+    VkBufferCopy copyReg{};
+    copyReg.size = size;
+    vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyReg);
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(graphicsQueue);
+    vkFreeCommandBuffers(logicalDevice, commandPool, 1, &commandBuffer);
 }
 
 void VkWindow::createSyncObjects() {
@@ -755,8 +792,7 @@ void VkWindow::cleanupSwap() {
     vkDestroyPipelineCache(logicalDevice, pipelineCache, nullptr);
     vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
     vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
-    for (auto imageView : swapImageViews)
-    {
+    for (auto imageView : swapImageViews) {
         vkDestroyImageView(logicalDevice, imageView, nullptr);
     }
     vkDestroySwapchainKHR(logicalDevice, swap, nullptr);
@@ -807,6 +843,8 @@ void VkWindow::recreateSwapChain() {
 }
 
 void VkWindow::paint() {
+    std::chrono::milliseconds startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
+
     if (minimized)
         return;
 
@@ -855,6 +893,8 @@ void VkWindow::paint() {
     presentInfo.pImageIndices = &imageIndex;
 
     vkQueuePresentKHR(presentQueue, &presentInfo);
+
+    dt = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - startTime;
 }
 
 void VkWindow::onClose() {
@@ -870,6 +910,18 @@ void VkWindow::onMinimize() {
     minimized = true;
 }
 
+float VkWindow::getDT() {
+    return dt.count();
+}
+
 void VkWindow::mainLoop() {
-    
+    float dt = getDT();
+
+    fprintf(stdout, "DT: %f\tFPS: %d\n", dt,  (int) (1000 / dt));
+
+    vertices = {
+        {{.0f, -.5f}, {1.0f - dt, 0.0f, 0.0f}},
+        {{.5f, .5f}, {0.0f, 1.0f - dt, 0.0f}},
+        {{-.5f, .5f}, {0.0f, 0.0f, 1.0f - dt}}
+    };
 }

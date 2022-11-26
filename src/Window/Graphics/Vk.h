@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <limits>
 #include <algorithm>
+#include <chrono>
 
 #include "Utils/Shader.h"
 #include "Utils/Vertex.h"
@@ -37,12 +38,6 @@ struct SwapChainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
-};
-
-const std::vector<vert> vertices = {
-    {{.0f, -.5f}, {1.0f, 0.0f, 0.0f}},
-    {{.5f, .5f}, {0.0f, 1.0f, 0.0f}},
-    {{-.5f, .5f}, {0.0f, 0.0f, 1.0f}}
 };
 
 class VkWindow : public Window {
@@ -82,12 +77,15 @@ public:
     
     void createBuffer(VkBufferUsageFlags usage, uint64_t size, VkMemoryPropertyFlags props, VkBuffer &buff, VkDeviceMemory &buffMem);
     void createVertexBuffer();
+    void copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size);
 
     virtual void paint() override;
     virtual void onClose() override;
     virtual void onResize() override;
     virtual void onMinimize() override;
     virtual void mainLoop() override;
+
+    float getDT();
 
 private:
     VkInstance instance;
@@ -134,4 +132,12 @@ private:
 
     bool resized;
     bool minimized;
+
+    std::vector<vert> vertices = {
+        {{.0f, -.5f}, {1.0f, 0.0f, 0.0f}},
+        {{.5f, .5f}, {0.0f, 1.0f, 0.0f}},
+        {{-.5f, .5f}, {0.0f, 0.0f, 1.0f}}
+    };
+
+    std::chrono::milliseconds dt;
 };

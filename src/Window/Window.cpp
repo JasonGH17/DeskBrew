@@ -6,10 +6,9 @@ Window::~Window() {};
 
 void Window::start() {
     while(isRunning()) {
-        paint();
-        broadcast();
-
         mainLoop();
+        broadcast();
+        paint();
     }
 
     onClose();
