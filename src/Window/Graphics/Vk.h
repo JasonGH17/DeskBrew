@@ -77,6 +77,7 @@ public:
     
     void createBuffer(VkBufferUsageFlags usage, uint64_t size, VkMemoryPropertyFlags props, VkBuffer &buff, VkDeviceMemory &buffMem);
     void createVertexBuffer();
+    void createIndexBuffer();
     void copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size);
 
     virtual void paint() override;
@@ -129,15 +130,19 @@ private:
 
     VkBuffer vertexBuffer;
     VkDeviceMemory vertexBufferMem;
+    VkBuffer indexBuffer;
+    VkDeviceMemory indexBufferMem;
 
     bool resized;
     bool minimized;
 
     std::vector<vert> vertices = {
-        {{.0f, -.5f}, {1.0f, 0.0f, 0.0f}},
-        {{.5f, .5f}, {0.0f, 1.0f, 0.0f}},
-        {{-.5f, .5f}, {0.0f, 0.0f, 1.0f}}
+        {{-.5f, -.5f}, {1.0f, 0.0f, 0.0f}},
+        {{.5f, -.5f}, {0.0f, 1.0f, 0.0f}},
+        {{.5f, .5f}, {0.0f, 0.0f, 1.0f}},
+        {{-.5f, .5f}, {1.0f, 1.0f, 1.0f}}
     };
+    uint16_t vertIndices[6] = {0, 1, 2, 2, 3, 0};
 
     std::chrono::milliseconds dt;
 };

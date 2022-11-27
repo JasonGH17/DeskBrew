@@ -15,6 +15,7 @@ VkWindow::VkWindow() {
     createCommandPool();
     createSyncObjects();
     createVertexBuffer();
+    createIndexBuffer();
     start();
     cleanup();
 }
@@ -713,8 +714,6 @@ void VkWindow::createVertexBuffer() {
     VkDeviceMemory stagingBufferMem;
     createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, buffSize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMem);
 
-    fprintf(stdout, "[VK] Created the vertex buffer\n");
-
     void *data;
     vkMapMemory(logicalDevice, stagingBufferMem, 0, buffSize, 0, &data);
     memcpy(data, vertices.data(), buffSize);
@@ -724,6 +723,26 @@ void VkWindow::createVertexBuffer() {
     copyBuffer(stagingBuffer, vertexBuffer, buffSize);
     vkDestroyBuffer(logicalDevice, stagingBuffer, nullptr);
     vkFreeMemory(logicalDevice, stagingBufferMem, nullptr);
+    fprintf(stdout, "[VK] Created the vertex buffer\n");
+}
+
+void VkWindow::createIndexBuffer() {
+    uint16_t buffSize = sizeof(vertIndices[0]) * sizeof(vertIndices);
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMem;
+    createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, buffSize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMem);
+
+    void *data;
+    vkMapMemory(logicalDevice, stagingBufferMem, 0, buffSize, 0, &data);
+    memcpy(data, vertIndices, buffSize);
+    vkUnmapMemory(logicalDevice, stagingBufferMem);
+    
+    createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, buffSize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMem);
+    copyBuffer(stagingBuffer, indexBuffer, buffSize);
+    vkDestroyBuffer(logicalDevice, stagingBuffer, nullptr);
+    vkFreeMemory(logicalDevice, stagingBufferMem, nullptr);
+    fprintf(stdout, "[VK] Created the index buffer\n");
 }
 
 void VkWindow::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
@@ -778,6 +797,10 @@ void VkWindow::cleanup() {
     vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
     cleanupSwap();
     vkDestroyBuffer(logicalDevice, vertexBuffer, nullptr);
+    vkDestroyBuffer(logicalDevice, indexBuffer, nullptr);
+    vkFreeMemory(logicalDevice, vertexBufferMem, nullptr);
+    vkFreeMemory(logicalDevice, indexBufferMem, nullptr);
+    vkDestroyBuffer(logicalDevice, vertexBuffer, nullptr);
     vkFreeMemory(logicalDevice, vertexBufferMem, nullptr);
     vkDestroyDevice(logicalDevice, nullptr);
     vkDestroySurfaceKHR(instance, surface, nullptr);
@@ -822,8 +845,8 @@ void VkWindow::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     VkBuffer vertexBuffs[] = {vertexBuffer};
     uint64_t offsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffs, offsets);
-    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
-
+    vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
+    vkCmdDrawIndexed(commandBuffer, (uint32_t)(sizeof(vertIndices) / sizeof(vertIndices[0])), 1, 0, 0, 0);
     vkCmdEndRenderPass(commandBuffer);
     if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
         fprintf(stderr, "[VK] Failed to end command buffer successfully");
@@ -918,10 +941,4 @@ void VkWindow::mainLoop() {
     float dt = getDT();
 
     fprintf(stdout, "DT: %f\tFPS: %d\n", dt,  (int) (1000 / dt));
-
-    vertices = {
-        {{.0f, -.5f}, {1.0f - dt, 0.0f, 0.0f}},
-        {{.5f, .5f}, {0.0f, 1.0f - dt, 0.0f}},
-        {{-.5f, .5f}, {0.0f, 0.0f, 1.0f - dt}}
-    };
 }
