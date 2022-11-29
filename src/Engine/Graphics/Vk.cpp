@@ -322,9 +322,10 @@ VkPresentModeKHR VkWindow::pickPresentMode(std::vector<VkPresentModeKHR>& modes)
         if(mode == VK_PRESENT_MODE_MAILBOX_KHR)
             return mode;
     }
-    #endif
-
+    #else
+    (void)modes;
     return VK_PRESENT_MODE_FIFO_KHR;
+    #endif
 }
 
 VkExtent2D VkWindow::pickSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) {

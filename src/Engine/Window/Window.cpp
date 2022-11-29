@@ -48,6 +48,7 @@ LRESULT Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
                 onResize();
             }
         }
+        return 0;
 
     default:
         return DefWindowProc(hwnd, msg, wParam, lParam);
