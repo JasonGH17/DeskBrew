@@ -28,11 +28,11 @@ bool VkWindow::checkInstanceExtSupport() {
     std::vector<VkExtensionProperties> extProps(extCount);
     vkEnumerateInstanceExtensionProperties(nullptr, &extCount, extProps.data());
 
-    if(VK_DEBUG) {
+    #ifdef VK_DEBUG
         fprintf(stdout, "[VK_DEBUG] (%d) Available vulkan instance extensions:\n", extCount);
         for (VkExtensionProperties &ext : extProps)
             fprintf(stdout, "\t- %s\n", ext.extensionName);
-    }
+    #endif
 
     if(EXTCOUNT > extCount) {
         return false;
@@ -59,11 +59,11 @@ bool VkWindow::checkValidationLayersSupport() {
     std::vector<VkLayerProperties> valProps(valCount);
     vkEnumerateInstanceLayerProperties(&valCount, valProps.data());
 
-    if(VK_DEBUG) {
+    #ifdef VK_DEBUG
         fprintf(stdout, "[VK_DEBUG] (%d) Available vulkan validation layers:\n", valCount);
         for (VkLayerProperties &valLayer : valProps)
             fprintf(stdout, "\t- %s\n", valLayer.layerName);
-    }
+    #endif
 
     if(VALCOUNT > valCount) {
         return false;
@@ -226,7 +226,7 @@ void VkWindow::pickPhysicalDevice() {
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-    if(VK_DEBUG) { 
+    #ifdef VK_DEBUG 
         fprintf(stdout, "[VK_DEBUG] (%d) Available physical devices found:\n", deviceCount);
         for(const VkPhysicalDevice& device : devices) {
             VkPhysicalDeviceProperties deviceProperties;
@@ -240,7 +240,7 @@ void VkWindow::pickPhysicalDevice() {
                 break;
             }
         }
-    }
+    #endif
 
     if(physicalDevice == VK_NULL_HANDLE) {
         fprintf(stderr, "[VK] No suitable Vulkan compliant devices were found on this machine...\n");

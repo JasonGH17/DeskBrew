@@ -2,14 +2,11 @@
 
 #include <vulkan/vulkan.h>
 
-#include "Vec2.h"
-#include "Vec3.h"
-
-using namespace DeskBrew::Math;
+#include <Math/Math.h>
 
 struct vert {
-    vec2f pos;
-    vec3f color;
+    Vec2f pos;
+    Vec3f color;
 
     static const VkVertexInputBindingDescription getBindingDesc() {
         VkVertexInputBindingDescription desc{};

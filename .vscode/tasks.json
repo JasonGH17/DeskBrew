@@ -2,31 +2,45 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Compile Project",
-            "command": "g++",
-            "args": [
-                "--std=c++17",
-                "-Wall",
-                "-Werror",
-                "-pedantic",
-                "-I${workspaceFolder}/src/Window",
-                "-I${workspaceFolder}/src/Math",
-                "-ID:/VulkanSDK/1.3.224.1/Include",
-                "-LD:/VulkanSDK/1.3.224.1/Bin",
-                "C:/Windows/System32/vulkan-1.dll",
-                "${workspaceFolder}/src/main.cpp",
-                "${workspaceFolder}/src/Window/Win32.cpp",
-                "${workspaceFolder}/src/Window/Window.cpp",
-                "${workspaceFolder}/src/Window/Graphics/Vk.cpp",
-                "-oDeskBrew.exe"
-            ],
+            "label": "Compile Engine.dll",
+            "command": "${workspaceFolder}/src/Engine/build.bat",
             "options": {
-                "cwd": "${workspaceFolder}/src"
+                "cwd": "${workspaceFolder}/src/Engine"
             },
             "problemMatcher": [
                 "$gcc"
             ],
             "group": "build"
+        },
+        {
+            "label": "Compile DeskBrew.exe",
+            "command": "${workspaceFolder}/src/App/build.bat",
+            "options": {
+                "cwd": "${workspaceFolder}/src/App"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": "build"
+        },
+        {
+            "label": "Compile Shader Files",
+            "command": "${workspaceFolder}/src/Shader/build.bat",
+            "options": {
+                "cwd": "${workspaceFolder}/src/Shader"
+            },
+            "group": "build"
+        },
+        {
+            "label": "Compile Project",
+            "command": "${workspaceFolder}/build.bat",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         }
     ]
 }

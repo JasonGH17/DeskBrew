@@ -2,7 +2,8 @@
 
 #include "Win32.h"
 
-#include "stdio.h"
+#include <stdio.h>
+#include "api.h"
 
 class Window : public Win32
 {

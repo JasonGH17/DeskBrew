@@ -4,10 +4,14 @@
 #define UNICODE
 #endif
 
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 
 #include <windows.h>
 #include <stdio.h>
+
+#include "api.h"
 
 class Win32
 {

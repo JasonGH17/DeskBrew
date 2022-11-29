@@ -1,9 +1,6 @@
 #pragma once
 
-// VERY IMPORTANT DEFINE. DO NOT DELETE.
-#define VK_USE_PLATFORM_WIN32_KHR
-
-#include "Window.h"
+#include "Window/Window.h"
 #include <vulkan/vulkan.h>
 
 #include <vector>
@@ -19,7 +16,7 @@
 #include "Utils/Vertex.h"
 #include "Utils/BufferMemory.h"
 
-#define VK_DEBUG true
+#include "api.h"
 
 #define EXTCOUNT 2
 #define VALCOUNT 1
@@ -40,7 +37,7 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-class VkWindow : public Window {
+class DBAPI VkWindow : public Window {
 public:
     VkWindow();
     ~VkWindow();
