@@ -797,9 +797,7 @@ void VkWindow::cleanup() {
     vkDestroyFence(logicalDevice, inFlightFence, nullptr);
     vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
     cleanupSwap();
-    vkDestroyBuffer(logicalDevice, vertexBuffer, nullptr);
     vkDestroyBuffer(logicalDevice, indexBuffer, nullptr);
-    vkFreeMemory(logicalDevice, vertexBufferMem, nullptr);
     vkFreeMemory(logicalDevice, indexBufferMem, nullptr);
     vkDestroyBuffer(logicalDevice, vertexBuffer, nullptr);
     vkFreeMemory(logicalDevice, vertexBufferMem, nullptr);
