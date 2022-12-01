@@ -1,5 +1,8 @@
 #pragma once
 
+#include "api.h"
+#ifdef DB_PLAT_WIN64
+
 #ifndef UNICODE
 #define UNICODE
 #endif
@@ -10,8 +13,6 @@
 
 #include <windows.h>
 #include <stdio.h>
-
-#include "api.h"
 
 class Win32
 {
@@ -28,8 +29,16 @@ public:
     bool isRunning();
     HWND getHWND();
 
+    virtual void mainLoop() = 0;
+    virtual void paint() = 0;
+    virtual void onClose() = 0;
+    virtual void onResize() = 0;
+    virtual void onMinimize() = 0;
+
 protected:
-    virtual LRESULT handleMessage(UINT msg, WPARAM wParam, LPARAM lParam) = 0;
+    LRESULT handleMessage(UINT msg, WPARAM wParam, LPARAM lParam);
     HWND hwnd;
     bool running;
 };
+
+#endif

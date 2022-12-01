@@ -1,6 +1,6 @@
 #include "Win32.h"
 
-#include "Window.h"
+#ifdef DB_PLAT_WIN64
 
 Win32::Win32() {
     running = true;
@@ -8,19 +8,19 @@ Win32::Win32() {
 Win32::~Win32() {}
 
 LRESULT CALLBACK Win32::wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-    Window *pthis = NULL;
+    Win32 *pthis = NULL;
 
     // Sets up class instance pointer
     if (msg == WM_NCCREATE) 
     {
-        pthis = (Window *)((CREATESTRUCT *)lParam)->lpCreateParams;
+        pthis = (Win32 *)((CREATESTRUCT *)lParam)->lpCreateParams;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pthis);
 
         pthis->hwnd = hwnd;
     } 
     else 
     {
-        pthis = (Window *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
+        pthis = (Win32 *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     }
 
     if (pthis) 
@@ -48,7 +48,7 @@ bool Win32::init()
     wc.lpszClassName = L"DeskBrew";
     wc.lpszMenuName = L"";
     wc.style = 0;
-    wc.lpfnWndProc = Window::wndProc;
+    wc.lpfnWndProc = &wndProc;
 
     if (!::RegisterClassEx(&wc))
     {
@@ -101,3 +101,47 @@ HWND Win32::getHWND()
 {
     return hwnd;
 }
+
+LRESULT Win32::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
+    HWND hwnd = getHWND();
+
+    switch (msg)
+    {
+    case WM_DESTROY:
+        fprintf(stdout, "[WIN32] Destroyed window\n");
+        running = false;
+        PostQuitMessage(0);
+        return 0;
+
+    case WM_CREATE:
+        fprintf(stdout, "[WIN32] Created new window\n");
+        return 0;
+
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = BeginPaint(hwnd, &ps);
+            FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
+            EndPaint(hwnd, &ps);
+
+            fprintf(stdout, "[WIN32] Updated window\n");
+        }
+        return 0;
+
+    case WM_SIZE:
+        {
+            if(wParam == SIZE_MINIMIZED) {
+                onMinimize();
+            } else {
+                onResize();
+            }
+        }
+        return 0;
+
+    default:
+        return DefWindowProc(hwnd, msg, wParam, lParam);
+    }
+    return TRUE;
+};
+
+#endif

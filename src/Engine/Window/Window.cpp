@@ -1,57 +1,15 @@
 #include "Window.h"
 
-Window::Window() {};
+PlatformWindow::PlatformWindow() {};
 
-Window::~Window() {};
+PlatformWindow::~PlatformWindow() {};
 
-void Window::start() {
+void PlatformWindow::start() {
     while(isRunning()) {
+        printf("Running: %s\n", isRunning()?"true":"false");
         mainLoop();
-        broadcast();
+        if(!broadcast()) break;
         paint();
     }
-
-    onClose();
+    kill();
 }
-
-LRESULT Window::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
-    HWND hwnd = getHWND();
-
-    switch (msg)
-    {
-    case WM_DESTROY:
-        fprintf(stdout, "[WIN32] Destroyed window\n");
-        running = false;
-        PostQuitMessage(0);
-        return 0;
-
-    case WM_CREATE:
-        fprintf(stdout, "[WIN32] Created new window\n");
-        return 0;
-
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hwnd, &ps);
-            FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
-            EndPaint(hwnd, &ps);
-
-            fprintf(stdout, "[WIN32] Updated window\n");
-        }
-        return 0;
-
-    case WM_SIZE:
-        {
-            if(wParam == SIZE_MINIMIZED) {
-                onMinimize();
-            } else {
-                onResize();
-            }
-        }
-        return 0;
-
-    default:
-        return DefWindowProc(hwnd, msg, wParam, lParam);
-    }
-    return TRUE;
-};

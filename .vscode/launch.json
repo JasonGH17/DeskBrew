@@ -11,6 +11,16 @@
             "cwd": "${workspaceFolder}/bin",
             "environment": [],
             "console": "externalTerminal"
+        },
+        {
+            "name": "Linux Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/bin/DeskBrew",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}/bin",
+            "environment": [],
         }
     ]
 }

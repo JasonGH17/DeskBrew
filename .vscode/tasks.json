@@ -3,7 +3,12 @@
     "tasks": [
         {
             "label": "Compile Engine.dll",
-            "command": "${workspaceFolder}/src/Engine/build.bat",
+            "windows": {
+                "command": "${workspaceFolder}/src/Engine/build.bat",
+            },
+            "linux": {
+                "command": "${workspaceFolder}/src/Engine/build.sh"
+            },
             "options": {
                 "cwd": "${workspaceFolder}/src/Engine"
             },
@@ -14,7 +19,12 @@
         },
         {
             "label": "Compile DeskBrew.exe",
-            "command": "${workspaceFolder}/src/App/build.bat",
+            "windows": {
+                "command": "${workspaceFolder}/src/App/build.bat",
+            },
+            "linux": {
+                "command": "${workspaceFolder}/src/App/build.sh"
+            },
             "options": {
                 "cwd": "${workspaceFolder}/src/App"
             },
@@ -33,10 +43,16 @@
         },
         {
             "label": "Compile Project",
-            "command": "${workspaceFolder}/build.bat",
+            "windows": {
+                "command": "${workspaceFolder}/build.bat",
+            },
+            "linux": {
+                "command": "${workspaceFolder}/build.sh"
+            },
             "options": {
                 "cwd": "${workspaceFolder}"
             },
+            "problemMatcher": "$gcc",
             "group": {
                 "kind": "build",
                 "isDefault": true

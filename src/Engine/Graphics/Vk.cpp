@@ -1,5 +1,7 @@
 #include "Vk.h"
 
+#ifdef DB_PLAT_WIN64
+
 VkWindow::VkWindow() {
     createInstance();
     if(!init()) {
@@ -941,3 +943,5 @@ void VkWindow::mainLoop() {
 
     fprintf(stdout, "DT: %f\tFPS: %d\n", dt,  (int) (1000 / dt));
 }
+
+#endif

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "api.h"
+#ifdef DB_PLAT_WIN64
+
 #include "Window/Window.h"
 #include <vulkan/vulkan.h>
 
@@ -15,8 +18,6 @@
 #include "Utils/Shader.h"
 #include "Utils/Vertex.h"
 #include "Utils/BufferMemory.h"
-
-#include "api.h"
 
 #define EXTCOUNT 2
 #define VALCOUNT 1
@@ -37,7 +38,7 @@ struct SwapChainSupportDetails {
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-class DBAPI VkWindow : public Window {
+class DBAPI VkWindow : public PlatformWindow {
 public:
     VkWindow();
     ~VkWindow();
@@ -143,3 +144,5 @@ private:
 
     std::chrono::milliseconds dt;
 };
+
+#endif

@@ -1,15 +1,20 @@
 #pragma once
 
 #include "Win32.h"
+#include "X11.h"
 
 #include <stdio.h>
 #include "api.h"
 
-class Window : public Win32
+#ifdef DB_PLAT_WIN64
+class DBAPI PlatformWindow : public Win32
+#else
+class DBAPI PlatformWindow : public X11
+#endif
 {
 public:
-    Window();
-    ~Window();
+    PlatformWindow();
+    ~PlatformWindow();
 
     void start();
 
@@ -18,6 +23,4 @@ public:
     virtual void onClose() = 0;
     virtual void onResize() = 0;
     virtual void onMinimize() = 0;
-
-    virtual LRESULT handleMessage(UINT msg, WPARAM wParam, LPARAM lParam) override;
 };
