@@ -19,6 +19,8 @@
 #include "Utils/Vertex.h"
 #include "Utils/BufferMemory.h"
 
+#include "Core/Logger/Logger.h"
+
 #define EXTCOUNT 2
 #define VALCOUNT 1
 #define GPUEXTCOUNT 1

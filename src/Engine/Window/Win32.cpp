@@ -2,28 +2,30 @@
 
 #ifdef DB_PLAT_WIN64
 
-Win32::Win32() {
+Win32::Win32()
+{
     running = true;
 }
 Win32::~Win32() {}
 
-LRESULT CALLBACK Win32::wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
+LRESULT CALLBACK Win32::wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
+{
     Win32 *pthis = NULL;
 
     // Sets up class instance pointer
-    if (msg == WM_NCCREATE) 
+    if (msg == WM_NCCREATE)
     {
         pthis = (Win32 *)((CREATESTRUCT *)lParam)->lpCreateParams;
         SetWindowLongPtr(hwnd, GWLP_USERDATA, (LONG_PTR)pthis);
 
         pthis->hwnd = hwnd;
-    } 
-    else 
+    }
+    else
     {
         pthis = (Win32 *)GetWindowLongPtr(hwnd, GWLP_USERDATA);
     }
 
-    if (pthis) 
+    if (pthis)
     {
         return pthis->handleMessage(msg, wParam, lParam);
     }
@@ -52,7 +54,7 @@ bool Win32::init()
 
     if (!::RegisterClassEx(&wc))
     {
-        fprintf(stderr, "[WIN32] Error registering window class:\n ERROR CODE:%ld\n", GetLastError());
+        DBFatal(DBWin32, "Error registering window class:\n ERROR CODE:%ld", GetLastError());
         return false;
     }
 
@@ -102,40 +104,44 @@ HWND Win32::getHWND()
     return hwnd;
 }
 
-LRESULT Win32::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam){
+LRESULT Win32::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam)
+{
     HWND hwnd = getHWND();
 
     switch (msg)
     {
     case WM_DESTROY:
-        fprintf(stdout, "[WIN32] Destroyed window\n");
+        DBInfo(DBWindow, "Destroyed window");
         running = false;
         PostQuitMessage(0);
         return 0;
 
     case WM_CREATE:
-        fprintf(stdout, "[WIN32] Created new window\n");
+        DBInfo(DBWindow, "Created new window");
         return 0;
 
     case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = BeginPaint(hwnd, &ps);
-            FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW+1));
-            EndPaint(hwnd, &ps);
+    {
+        PAINTSTRUCT ps;
+        HDC hdc = BeginPaint(hwnd, &ps);
+        FillRect(hdc, &ps.rcPaint, (HBRUSH)(COLOR_WINDOW + 1));
+        EndPaint(hwnd, &ps);
 
-            fprintf(stdout, "[WIN32] Updated window\n");
-        }
+        DBInfo(DBWindow, "Updated window");
+    }
         return 0;
 
     case WM_SIZE:
+    {
+        if (wParam == SIZE_MINIMIZED)
         {
-            if(wParam == SIZE_MINIMIZED) {
-                onMinimize();
-            } else {
-                onResize();
-            }
+            onMinimize();
         }
+        else
+        {
+            onResize();
+        }
+    }
         return 0;
 
     default:

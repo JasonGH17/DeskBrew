@@ -10,9 +10,7 @@ public:
 
     virtual void mainLoop() {}
     virtual void paint() {}
-    virtual void onClose() {
-        printf("Closed\n");
-    }
+    virtual void onClose() {}
     virtual void onResize() {}
     virtual void onMinimize() {}
 };

@@ -10,10 +10,7 @@ bool X11::init()
     display = XOpenDisplay(NULL);
     xConn = XGetXCBConnection(display);
     if (xcb_connection_has_error(xConn))
-    {
-        fprintf(stderr, "[X11] Error connecting to X11 window server...\n");
-        exit(1);
-    }
+        DBFatal(DBX11, "Error connecting to X11 window server...");
 
     const struct xcb_setup_t *setup = xcb_get_setup(xConn);
     xcb_screen_iterator_t sIt = xcb_setup_roots_iterator(setup);
@@ -80,10 +77,7 @@ bool X11::init()
     xcb_map_window(xConn, window);
 
     if (xcb_flush(xConn) <= 0)
-    {
-        fprintf(stderr, "[X11] Error when flushing stream...\n");
-        exit(1);
-    }
+        DBFatal(DBX11, "Error when flushing stream...");
 
     running = true;
     return true;
@@ -109,7 +103,6 @@ bool X11::broadcast()
         case XCB_KEY_RELEASE:
         {
             // Keyboard
-            printf("Keyboard press/release\n");
         }
         break;
 

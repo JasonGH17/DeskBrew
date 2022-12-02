@@ -2,10 +2,12 @@
 
 #ifdef DB_PLAT_WIN64
 
-VkWindow::VkWindow() {
+VkWindow::VkWindow()
+{
     createInstance();
-    if(!init()) {
-        fprintf(stderr, "[Window] Couldn't initialize WIN32 window instance\n");
+    if (!init())
+    {
+        DBError(DBWindow, "Couldn't initialize window instance");
     };
     createWindowSurface();
     pickPhysicalDevice();
@@ -24,79 +26,90 @@ VkWindow::VkWindow() {
 
 VkWindow::~VkWindow() {}
 
-bool VkWindow::checkInstanceExtSupport() {
+bool VkWindow::checkInstanceExtSupport()
+{
     uint32_t extCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
     std::vector<VkExtensionProperties> extProps(extCount);
     vkEnumerateInstanceExtensionProperties(nullptr, &extCount, extProps.data());
 
-    #ifdef VK_DEBUG
-        fprintf(stdout, "[VK_DEBUG] (%d) Available vulkan instance extensions:\n", extCount);
-        for (VkExtensionProperties &ext : extProps)
-            fprintf(stdout, "\t- %s\n", ext.extensionName);
-    #endif
+#ifdef VK_DEBUG
+    DBDebug(DBVulkan, "(%d) Available vulkan instance extensions:", extCount);
+    for (VkExtensionProperties &ext : extProps)
+        fprintf(stdout, "\t- %s\n", ext.extensionName);
+#endif
 
-    if(EXTCOUNT > extCount) {
+    if (EXTCOUNT > extCount)
+    {
         return false;
     }
 
-    for(const char* extName : extensionNames) {
+    for (const char *extName : extensionNames)
+    {
         bool found = false;
-        for(VkExtensionProperties& ext : extProps) {
-            if(strcmp(ext.extensionName, extName) == 0){
+        for (VkExtensionProperties &ext : extProps)
+        {
+            if (strcmp(ext.extensionName, extName) == 0)
+            {
                 found = true;
                 break;
             }
         }
-        if(!found)
+        if (!found)
             return false;
     }
 
     return true;
 }
 
-bool VkWindow::checkValidationLayersSupport() {
+bool VkWindow::checkValidationLayersSupport()
+{
     uint32_t valCount = 0;
     vkEnumerateInstanceLayerProperties(&valCount, nullptr);
     std::vector<VkLayerProperties> valProps(valCount);
     vkEnumerateInstanceLayerProperties(&valCount, valProps.data());
 
-    #ifdef VK_DEBUG
-        fprintf(stdout, "[VK_DEBUG] (%d) Available vulkan validation layers:\n", valCount);
-        for (VkLayerProperties &valLayer : valProps)
-            fprintf(stdout, "\t- %s\n", valLayer.layerName);
-    #endif
+#ifdef VK_DEBUG
+    DBDebug(DBVulkan, "(%d) Available vulkan validation layers:", valCount);
+    for (VkLayerProperties &valLayer : valProps)
+        fprintf(stdout, "\t- %s\n", valLayer.layerName);
+#endif
 
-    if(VALCOUNT > valCount) {
+    if (VALCOUNT > valCount)
+    {
         return false;
     }
 
-    for(const char* valLayerName : validationLayers) {
+    for (const char *valLayerName : validationLayers)
+    {
         bool found = false;
-        for(VkLayerProperties& valLayer : valProps) {
-            if(strcmp(valLayer.layerName, valLayerName) == 0){
+        for (VkLayerProperties &valLayer : valProps)
+        {
+            if (strcmp(valLayer.layerName, valLayerName) == 0)
+            {
                 found = true;
                 break;
             }
         }
-        if(!found)
+        if (!found)
             return false;
     }
 
     return true;
 };
 
-void VkWindow::createInstance() {
-    if(enableValidationLayers && !checkValidationLayersSupport()) {
-        fprintf(stderr, "[VK_DEBUG] Some validation layers aren't supported on this system...\n");
-        exit(1);
+void VkWindow::createInstance()
+{
+    if (enableValidationLayers && !checkValidationLayersSupport())
+    {
+        DBFatal(DBVulkan, "Some validation layers aren't supported on this system...");
     }
-    if(!checkInstanceExtSupport()) {
-        fprintf(stderr, "[VK] Some needed Vulkan instance extensions aren't supported on this system...\n");
-        exit(1);
+    if (!checkInstanceExtSupport())
+    {
+        DBFatal(DBVulkan, "Some needed Vulkan instance extensions aren't supported on this system...");
     }
 
-    fprintf(stdout, "[VK] Creating instance...\n");
+    DBInfo(DBVulkan, "Creating instance...");
 
     VkApplicationInfo appInfo{};
 
@@ -113,21 +126,24 @@ void VkWindow::createInstance() {
     createInfo.enabledExtensionCount = EXTCOUNT;
     createInfo.ppEnabledExtensionNames = extensionNames;
 
-    if(enableValidationLayers) {
+    if (enableValidationLayers)
+    {
         createInfo.enabledLayerCount = VALCOUNT;
         createInfo.ppEnabledLayerNames = validationLayers;
-    } else
+    }
+    else
         createInfo.enabledLayerCount = 0;
 
     if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
     {
-        throw std::runtime_error("[VK] Error when creating Vulkan instance\n");
+        throw std::runtime_error("[VK] Error when creating Vulkan instance");
     };
-    
-    fprintf(stdout, "[VK] Created Vulkan instance\n");
+
+    DBInfo(DBVulkan, "Created Vulkan instance");
 }
 
-QueueFamilyIndices VkWindow::findQueueFamilies(VkPhysicalDevice device) {
+QueueFamilyIndices VkWindow::findQueueFamilies(VkPhysicalDevice device)
+{
     QueueFamilyIndices indices;
 
     uint32_t queueCount = 0;
@@ -136,15 +152,16 @@ QueueFamilyIndices VkWindow::findQueueFamilies(VkPhysicalDevice device) {
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueCount, queueFamilies.data());
 
     int i = 0;
-    for (VkQueueFamilyProperties queueFamily : queueFamilies) {
+    for (VkQueueFamilyProperties queueFamily : queueFamilies)
+    {
         VkBool32 presentSupport = false;
         vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
-        if(presentSupport)
+        if (presentSupport)
             indices.presentFamily = i;
-        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) 
+        if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             indices.graphicsFamily = i;
-        
-        if(indices.isComplete())
+
+        if (indices.isComplete())
             break;
         i++;
     }
@@ -152,43 +169,50 @@ QueueFamilyIndices VkWindow::findQueueFamilies(VkPhysicalDevice device) {
     return indices;
 }
 
-bool VkWindow::checkGPUExtSupport(VkPhysicalDevice device) {
+bool VkWindow::checkGPUExtSupport(VkPhysicalDevice device)
+{
     uint32_t extCount;
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extCount, nullptr);
-    if(GPUEXTCOUNT > extCount)
+    if (GPUEXTCOUNT > extCount)
         return false;
     std::vector<VkExtensionProperties> extProps(extCount);
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extCount, extProps.data());
 
-    for(const char* extName : deviceExts) {
+    for (const char *extName : deviceExts)
+    {
         bool found = false;
-        for(VkExtensionProperties& ext : extProps) {
-            if(strcmp(ext.extensionName, extName) == 0){
+        for (VkExtensionProperties &ext : extProps)
+        {
+            if (strcmp(ext.extensionName, extName) == 0)
+            {
                 found = true;
                 break;
             }
         }
-        if(!found)
+        if (!found)
             return false;
     }
 
     return true;
 }
 
-SwapChainSupportDetails VkWindow::getSwapChainSupport(VkPhysicalDevice device) {
+SwapChainSupportDetails VkWindow::getSwapChainSupport(VkPhysicalDevice device)
+{
     SwapChainSupportDetails details{};
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
-    
+
     uint32_t sFormatCount;
     vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &sFormatCount, nullptr);
-    if(sFormatCount > 0) {
+    if (sFormatCount > 0)
+    {
         details.formats.resize(sFormatCount);
         vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &sFormatCount, details.formats.data());
     }
 
     uint32_t sModesCount;
     vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &sModesCount, nullptr);
-    if(sModesCount > 0) {
+    if (sModesCount > 0)
+    {
         details.presentModes.resize(sModesCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface, &sModesCount, details.presentModes.data());
     }
@@ -197,68 +221,75 @@ SwapChainSupportDetails VkWindow::getSwapChainSupport(VkPhysicalDevice device) {
 }
 
 // Implement better system later on (Or make it changeable by the user via UI)
-bool VkWindow::isDeviceSuitable(VkPhysicalDevice device) {
+bool VkWindow::isDeviceSuitable(VkPhysicalDevice device)
+{
     VkPhysicalDeviceProperties deviceProperties;
     VkPhysicalDeviceFeatures deviceFeatures;
     vkGetPhysicalDeviceProperties(device, &deviceProperties);
     vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-    if(deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader) {
+    if (deviceProperties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU && deviceFeatures.geometryShader)
+    {
         QueueFamilyIndices indices = findQueueFamilies(device);
         SwapChainSupportDetails swapDetails = getSwapChainSupport(device);
-        return 
-            indices.isComplete() && 
-            checkGPUExtSupport(device) && 
-            !swapDetails.formats.empty() && 
-            !swapDetails.presentModes.empty();
+        return indices.isComplete() &&
+               checkGPUExtSupport(device) &&
+               !swapDetails.formats.empty() &&
+               !swapDetails.presentModes.empty();
     };
 
     return false;
 }
 
-void VkWindow::pickPhysicalDevice() {
+void VkWindow::pickPhysicalDevice()
+{
     uint32_t deviceCount = 0;
     vkEnumeratePhysicalDevices(instance, &deviceCount, nullptr);
-    
-    if(deviceCount == 0) {
-        fprintf(stderr, "[VK] No devices support Vulkan on this machine...\n");
-        exit(1);
+
+    if (deviceCount == 0)
+    {
+        DBFatal(DBVulkan, "No devices support Vulkan on this machine...");
     }
 
     std::vector<VkPhysicalDevice> devices(deviceCount);
     vkEnumeratePhysicalDevices(instance, &deviceCount, devices.data());
 
-    #ifdef VK_DEBUG 
-        fprintf(stdout, "[VK_DEBUG] (%d) Available physical devices found:\n", deviceCount);
-        for(const VkPhysicalDevice& device : devices) {
-            VkPhysicalDeviceProperties deviceProperties;
-            vkGetPhysicalDeviceProperties(device, &deviceProperties);
-            fprintf(stdout, "\t- %s\n", deviceProperties.deviceName);
-        }
-
-        for(const VkPhysicalDevice& device : devices) {
-            if(isDeviceSuitable(device)) {
-                physicalDevice = device;
-                break;
-            }
-        }
-    #endif
-
-    if(physicalDevice == VK_NULL_HANDLE) {
-        fprintf(stderr, "[VK] No suitable Vulkan compliant devices were found on this machine...\n");
-        exit(1);
+#ifdef VK_DEBUG
+    DBDebug(DBVulkan, "(%d) Available physical devices found:", deviceCount);
+    for (const VkPhysicalDevice &device : devices)
+    {
+        VkPhysicalDeviceProperties deviceProperties;
+        vkGetPhysicalDeviceProperties(device, &deviceProperties);
+        fprintf(stdout, "\t- %s\n", deviceProperties.deviceName);
     }
 
-    fprintf(stdout, "[VK] Picked graphics device\n");
+    for (const VkPhysicalDevice &device : devices)
+    {
+        if (isDeviceSuitable(device))
+        {
+            physicalDevice = device;
+            break;
+        }
+    }
+#endif
+
+    if (physicalDevice == VK_NULL_HANDLE)
+    {
+        DBFatal(DBVulkan, "No suitable Vulkan compliant devices were found on this machine...");
+    }
+
+    DBInfo(DBVulkan, "Picked graphics device");
 }
 
-void VkWindow::createLogicalDevice() {
+void VkWindow::createLogicalDevice()
+{
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfoArr;
     std::set<uint32_t> uniqueQueues = {indices.graphicsFamily.value(), indices.presentFamily.value()};
     const float queuePrio = 1.0f;
-    for(uint32_t queue : uniqueQueues) {
+    for (uint32_t queue : uniqueQueues)
+    {
         VkDeviceQueueCreateInfo queueCreateInfo{};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queueCreateInfo.queueFamilyIndex = queue;
@@ -277,61 +308,70 @@ void VkWindow::createLogicalDevice() {
     createInfo.enabledExtensionCount = GPUEXTCOUNT;
     createInfo.ppEnabledExtensionNames = deviceExts;
 
-    if (enableValidationLayers){
+    if (enableValidationLayers)
+    {
         createInfo.enabledLayerCount = static_cast<uint32_t>(VALCOUNT);
         createInfo.ppEnabledLayerNames = validationLayers;
-    } else {
+    }
+    else
+    {
         createInfo.enabledLayerCount = 0;
     }
 
-    if(vkCreateDevice(physicalDevice, &createInfo, nullptr, &logicalDevice) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Error when creating Vulkan logical device...\n");
-        exit(1);
+    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &logicalDevice) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Error when creating Vulkan logical device...");
     }
 
     vkGetDeviceQueue(logicalDevice, indices.graphicsFamily.value(), 0, &graphicsQueue);
     vkGetDeviceQueue(logicalDevice, indices.presentFamily.value(), 0, &presentQueue);
-    
-    fprintf(stdout, "[VK] Created Vulkan logical device\n");
+
+    DBInfo(DBVulkan, "Created Vulkan logical device");
 }
 
-void VkWindow::createWindowSurface() {
+void VkWindow::createWindowSurface()
+{
     VkWin32SurfaceCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     createInfo.hwnd = getHWND();
     createInfo.hinstance = GetModuleHandle(nullptr);
 
-    if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Error when trying to create Vulkan window surface");
-        exit(1);
+    if (vkCreateWin32SurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Error when trying to create Vulkan window surface");
     }
 
-    fprintf(stdout, "[VK] Created window surface\n");
+    DBInfo(DBVulkan, "Created window surface");
 }
 
-VkSurfaceFormatKHR VkWindow::pickSurfaceFormat(std::vector<VkSurfaceFormatKHR>& formats) {
-    for(VkSurfaceFormatKHR format : formats) {
-        if(format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+VkSurfaceFormatKHR VkWindow::pickSurfaceFormat(std::vector<VkSurfaceFormatKHR> &formats)
+{
+    for (VkSurfaceFormatKHR format : formats)
+    {
+        if (format.format == VK_FORMAT_B8G8R8A8_SRGB && format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
             return format;
     }
 
     return formats[0];
 }
 
-VkPresentModeKHR VkWindow::pickPresentMode(std::vector<VkPresentModeKHR>& modes) {
-    #ifdef PERFORMANCE
-    for(VkPresentModeKHR mode : modes) {
-        if(mode == VK_PRESENT_MODE_MAILBOX_KHR)
+VkPresentModeKHR VkWindow::pickPresentMode(std::vector<VkPresentModeKHR> &modes)
+{
+#ifdef PERFORMANCE
+    for (VkPresentModeKHR mode : modes)
+    {
+        if (mode == VK_PRESENT_MODE_MAILBOX_KHR)
             return mode;
     }
-    #else
+#else
     (void)modes;
     return VK_PRESENT_MODE_FIFO_KHR;
-    #endif
+#endif
 }
 
-VkExtent2D VkWindow::pickSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities) {
-    if(capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) 
+VkExtent2D VkWindow::pickSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities)
+{
+    if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
         return capabilities.currentExtent;
 
     RECT rc;
@@ -342,8 +382,7 @@ VkExtent2D VkWindow::pickSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities
 
     VkExtent2D extent = {
         static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height)
-    };
+        static_cast<uint32_t>(height)};
 
     extent.width = std::clamp(extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
     extent.height = std::clamp(extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
@@ -351,7 +390,8 @@ VkExtent2D VkWindow::pickSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities
     return extent;
 }
 
-void VkWindow::createSwapChain() {
+void VkWindow::createSwapChain()
+{
     SwapChainSupportDetails scDetails = getSwapChainSupport(physicalDevice);
 
     VkSurfaceFormatKHR format = pickSurfaceFormat(scDetails.formats);
@@ -359,7 +399,8 @@ void VkWindow::createSwapChain() {
     VkExtent2D extent = pickSwapExtent(scDetails.capabilities);
 
     uint32_t imageCount = scDetails.capabilities.minImageCount + 1;
-    if (scDetails.capabilities.maxImageCount > 0 && imageCount > scDetails.capabilities.maxImageCount) {
+    if (scDetails.capabilities.maxImageCount > 0 && imageCount > scDetails.capabilities.maxImageCount)
+    {
         imageCount = scDetails.capabilities.maxImageCount;
     }
 
@@ -376,20 +417,23 @@ void VkWindow::createSwapChain() {
 
     QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
     uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
-    if (indices.graphicsFamily != indices.presentFamily) {
+    if (indices.graphicsFamily != indices.presentFamily)
+    {
         createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
         createInfo.queueFamilyIndexCount = 2;
         createInfo.pQueueFamilyIndices = queueFamilyIndices;
-    } else createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    
+    }
+    else
+        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
     createInfo.preTransform = scDetails.capabilities.currentTransform;
     createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
     createInfo.clipped = VK_TRUE;
-    createInfo.oldSwapchain = VK_NULL_HANDLE; // WILL ADD A HANDLER LATER 
+    createInfo.oldSwapchain = VK_NULL_HANDLE; // WILL ADD A HANDLER LATER
 
-    if(vkCreateSwapchainKHR(logicalDevice, &createInfo, nullptr, &swap) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Error when creating Vulkan swapchain...\n");
-        exit(1);
+    if (vkCreateSwapchainKHR(logicalDevice, &createInfo, nullptr, &swap) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Error when creating Vulkan swapchain...");
     }
 
     uint32_t imgCount;
@@ -400,13 +444,15 @@ void VkWindow::createSwapChain() {
     swapImageFormat = format.format;
     swapExtent = extent;
 
-    fprintf(stdout, "[VK] Created Vulkan swapchain\n");
+    DBInfo(DBVulkan, "Created Vulkan swapchain");
 }
 
-void VkWindow::createImageViews() {
+void VkWindow::createImageViews()
+{
     swapImageViews.resize(swapImages.size());
 
-    for (size_t i = 0; i < swapImages.size(); i++) {
+    for (size_t i = 0; i < swapImages.size(); i++)
+    {
         VkImageViewCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = swapImages[i];
@@ -424,29 +470,31 @@ void VkWindow::createImageViews() {
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(logicalDevice, &createInfo, nullptr, &swapImageViews[i]) != VK_SUCCESS) {
-            fprintf(stderr, "[VK] Error when creating Vulkan image view...\n");
-            exit(1);
+        if (vkCreateImageView(logicalDevice, &createInfo, nullptr, &swapImageViews[i]) != VK_SUCCESS)
+        {
+            DBFatal(DBVulkan, "Error when creating Vulkan image view...");
         }
     }
 
-    fprintf(stdout, "[VK] Created Vulkan image views\n");
+    DBInfo(DBVulkan, "Created Vulkan image views");
 }
 
-void VkWindow::createGraphicsPipelineCache() {
+void VkWindow::createGraphicsPipelineCache()
+{
     VkPipelineCacheCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
     createInfo.pInitialData = nullptr;
     createInfo.initialDataSize = (size_t)0;
 
-    if(vkCreatePipelineCache(logicalDevice, &createInfo, nullptr, &pipelineCache)!=VK_SUCCESS){
-        fprintf(stderr, "[VK] Failed to create pipeline cache...\n");
-        exit(1);
+    if (vkCreatePipelineCache(logicalDevice, &createInfo, nullptr, &pipelineCache) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to create pipeline cache...");
     }
-    fprintf(stdout, "[VK] Created graphics pipeline cache successfully\n");
+    DBInfo(DBVulkan, "Created graphics pipeline cache successfully");
 }
 
-void VkWindow::createRenderPass() {
+void VkWindow::createRenderPass()
+{
     VkAttachmentDescription colorAttachment{};
     colorAttachment.format = swapImageFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -483,18 +531,19 @@ void VkWindow::createRenderPass() {
     createInfo.dependencyCount = 1;
     createInfo.pDependencies = &dependency;
 
-    if(vkCreateRenderPass(logicalDevice, &createInfo, nullptr, &renderPass) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to create graphics pipeline render pass...\n");
-        exit(1);
+    if (vkCreateRenderPass(logicalDevice, &createInfo, nullptr, &renderPass) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to create graphics pipeline render pass...");
     }
-    fprintf(stdout, "[VK] Created graphics pipeline render pass\n");
+    DBInfo(DBVulkan, "Created graphics pipeline render pass");
 }
 
-void VkWindow::createGraphicsPipeline() {
+void VkWindow::createGraphicsPipeline()
+{
     VkShaderModule vertexShader = loadShader(logicalDevice, "./vertex.spv");
-    fprintf(stdout, "[VK] Successfully loaded in the vertex shader\n");
+    DBInfo(DBVulkan, "Successfully loaded in the vertex shader");
     VkShaderModule fragmentShader = loadShader(logicalDevice, "./fragment.spv");
-    fprintf(stdout, "[VK] Successfully loaded in the fragment shader\n");
+    DBInfo(DBVulkan, "Successfully loaded in the fragment shader");
 
     VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
     vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -526,15 +575,15 @@ void VkWindow::createGraphicsPipeline() {
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = (float) swapExtent.width;
-    viewport.height = (float) swapExtent.height;
+    viewport.width = (float)swapExtent.width;
+    viewport.height = (float)swapExtent.height;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor{};
     scissor.offset = {0, 0};
     scissor.extent = swapExtent;
-    
+
     VkPipelineViewportStateCreateInfo viewportState{};
     viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
     viewportState.viewportCount = 1;
@@ -554,7 +603,7 @@ void VkWindow::createGraphicsPipeline() {
     rasterizer.depthBiasConstantFactor = 0.0f;
     rasterizer.depthBiasClamp = 0.0f;
     rasterizer.depthBiasSlopeFactor = 0.0f;
-    
+
     VkPipelineMultisampleStateCreateInfo multisampling{};
     multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     multisampling.sampleShadingEnable = VK_FALSE;
@@ -565,7 +614,8 @@ void VkWindow::createGraphicsPipeline() {
     multisampling.alphaToOneEnable = VK_FALSE;
 
     VkPipelineColorBlendAttachmentState colorBlendAttachment{};
-    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;    colorBlendAttachment.blendEnable = VK_TRUE;
+    colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    colorBlendAttachment.blendEnable = VK_TRUE;
     colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
     colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
     colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
@@ -599,9 +649,9 @@ void VkWindow::createGraphicsPipeline() {
     pipelineLayoutInfo.pSetLayouts = nullptr;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
     pipelineLayoutInfo.pPushConstantRanges = nullptr;
-    if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to create pipeline layout...\n");
-        exit(1);
+    if (vkCreatePipelineLayout(logicalDevice, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to create pipeline layout...");
     }
 
     VkGraphicsPipelineCreateInfo createInfo{};
@@ -623,23 +673,24 @@ void VkWindow::createGraphicsPipeline() {
     createInfo.subpass = 0;
 
     createGraphicsPipelineCache();
-    if(vkCreateGraphicsPipelines(logicalDevice, pipelineCache, 1, &createInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to create graphics pipeline...\n");
-        exit(1);
+    if (vkCreateGraphicsPipelines(logicalDevice, pipelineCache, 1, &createInfo, nullptr, &graphicsPipeline) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to create graphics pipeline...");
     }
-    fprintf(stdout, "[VK] Created graphics pipeline successfully\n");
+    DBInfo(DBVulkan, "Created graphics pipeline successfully");
 
     vkDestroyShaderModule(logicalDevice, vertexShader, nullptr);
     vkDestroyShaderModule(logicalDevice, fragmentShader, nullptr);
 }
 
-void VkWindow::createFramebuffers() {
+void VkWindow::createFramebuffers()
+{
     framebuffers.resize(swapImageViews.size());
 
-    for (size_t i = 0; i < swapImageViews.size(); i++) {
+    for (size_t i = 0; i < swapImageViews.size(); i++)
+    {
         VkImageView attachments[] = {
-            swapImageViews[i]
-        };
+            swapImageViews[i]};
 
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -650,49 +701,51 @@ void VkWindow::createFramebuffers() {
         framebufferInfo.height = swapExtent.height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS) {
-            fprintf(stderr, "[VK] Failed to create framebuffers...\n");
-            exit(1);
+        if (vkCreateFramebuffer(logicalDevice, &framebufferInfo, nullptr, &framebuffers[i]) != VK_SUCCESS)
+        {
+            DBFatal(DBVulkan, "Failed to create framebuffers...");
         }
 
-        fprintf(stdout, "[VK] Created framebuffer: %d\n", (uint32_t)i);
+        DBInfo(DBVulkan, "Created framebuffer: %d", (uint32_t)i);
     }
 }
 
-void VkWindow::createCommandPool() {
+void VkWindow::createCommandPool()
+{
     VkCommandPoolCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     createInfo.queueFamilyIndex = findQueueFamilies(physicalDevice).graphicsFamily.value();
     createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if(vkCreateCommandPool(logicalDevice, &createInfo, nullptr, &commandPool) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to create command pool...\n");
-        exit(1);
+    if (vkCreateCommandPool(logicalDevice, &createInfo, nullptr, &commandPool) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to create command pool...");
     }
-    fprintf(stdout, "[VK] Created command pool\n");
+    DBInfo(DBVulkan, "Created command pool");
 
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.commandPool = commandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = 1;
-    if (vkAllocateCommandBuffers(logicalDevice, &allocInfo, &commandBuffer) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to create command buffer...\n");
-        exit(1);
+    if (vkAllocateCommandBuffers(logicalDevice, &allocInfo, &commandBuffer) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to create command buffer...");
     }
-    fprintf(stdout, "[VK] Created command buffer\n");
+    DBInfo(DBVulkan, "Created command buffer");
 }
 
-void VkWindow::createBuffer(VkBufferUsageFlags usage, uint64_t size, VkMemoryPropertyFlags props, VkBuffer &buff, VkDeviceMemory &buffMem) {
+void VkWindow::createBuffer(VkBufferUsageFlags usage, uint64_t size, VkMemoryPropertyFlags props, VkBuffer &buff, VkDeviceMemory &buffMem)
+{
     VkBufferCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     createInfo.size = size;
     createInfo.usage = usage;
     createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(logicalDevice, &createInfo, nullptr, &buff) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to create Vulkan vertex buffer...\n");
-        exit(1);
+    if (vkCreateBuffer(logicalDevice, &createInfo, nullptr, &buff) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to create Vulkan vertex buffer...");
     }
 
     VkMemoryRequirements memReq;
@@ -702,17 +755,18 @@ void VkWindow::createBuffer(VkBufferUsageFlags usage, uint64_t size, VkMemoryPro
     allocInfo.allocationSize = memReq.size;
     allocInfo.memoryTypeIndex = findMemoryType(physicalDevice, memReq.memoryTypeBits, props);
 
-    if(vkAllocateMemory(logicalDevice, &allocInfo, nullptr, &buffMem) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to allocate memory for the Vulkan vertex buffer...\n");
-        exit(1);
+    if (vkAllocateMemory(logicalDevice, &allocInfo, nullptr, &buffMem) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to allocate memory for the Vulkan vertex buffer...");
     }
 
     vkBindBufferMemory(logicalDevice, buff, buffMem, 0);
 }
 
-void VkWindow::createVertexBuffer() {
+void VkWindow::createVertexBuffer()
+{
     uint64_t buffSize = sizeof(vertices[0]) * vertices.size();
-    
+
     VkBuffer stagingBuffer;
     VkDeviceMemory stagingBufferMem;
     createBuffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, buffSize, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMem);
@@ -721,15 +775,16 @@ void VkWindow::createVertexBuffer() {
     vkMapMemory(logicalDevice, stagingBufferMem, 0, buffSize, 0, &data);
     memcpy(data, vertices.data(), buffSize);
     vkUnmapMemory(logicalDevice, stagingBufferMem);
-    
+
     createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, buffSize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMem);
     copyBuffer(stagingBuffer, vertexBuffer, buffSize);
     vkDestroyBuffer(logicalDevice, stagingBuffer, nullptr);
     vkFreeMemory(logicalDevice, stagingBufferMem, nullptr);
-    fprintf(stdout, "[VK] Created the vertex buffer\n");
+    DBInfo(DBVulkan, "Created the vertex buffer");
 }
 
-void VkWindow::createIndexBuffer() {
+void VkWindow::createIndexBuffer()
+{
     uint16_t buffSize = sizeof(vertIndices[0]) * sizeof(vertIndices);
 
     VkBuffer stagingBuffer;
@@ -740,15 +795,16 @@ void VkWindow::createIndexBuffer() {
     vkMapMemory(logicalDevice, stagingBufferMem, 0, buffSize, 0, &data);
     memcpy(data, vertIndices, buffSize);
     vkUnmapMemory(logicalDevice, stagingBufferMem);
-    
+
     createBuffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, buffSize, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMem);
     copyBuffer(stagingBuffer, indexBuffer, buffSize);
     vkDestroyBuffer(logicalDevice, stagingBuffer, nullptr);
     vkFreeMemory(logicalDevice, stagingBufferMem, nullptr);
-    fprintf(stdout, "[VK] Created the index buffer\n");
+    DBInfo(DBVulkan, "Created the index buffer");
 }
 
-void VkWindow::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
+void VkWindow::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size)
+{
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
@@ -775,7 +831,8 @@ void VkWindow::copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size) {
     vkFreeCommandBuffers(logicalDevice, commandPool, 1, &commandBuffer);
 }
 
-void VkWindow::createSyncObjects() {
+void VkWindow::createSyncObjects()
+{
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
@@ -784,16 +841,16 @@ void VkWindow::createSyncObjects() {
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
     if (
-        vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS || 
+        vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
         vkCreateSemaphore(logicalDevice, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS ||
-        vkCreateFence(logicalDevice, &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS
-    ) {
-        fprintf(stderr, "[VK] Failed to create semaphores...\n");
-        exit(1);
+        vkCreateFence(logicalDevice, &fenceInfo, nullptr, &inFlightFence) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to create semaphores...");
     }
 }
 
-void VkWindow::cleanup() {
+void VkWindow::cleanup()
+{
     vkDestroySemaphore(logicalDevice, imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(logicalDevice, renderFinishedSemaphore, nullptr);
     vkDestroyFence(logicalDevice, inFlightFence, nullptr);
@@ -808,27 +865,31 @@ void VkWindow::cleanup() {
     vkDestroyInstance(instance, nullptr);
 }
 
-void VkWindow::cleanupSwap() {
-    for (auto framebuffer : framebuffers) {
+void VkWindow::cleanupSwap()
+{
+    for (auto framebuffer : framebuffers)
+    {
         vkDestroyFramebuffer(logicalDevice, framebuffer, nullptr);
     }
     vkDestroyPipeline(logicalDevice, graphicsPipeline, nullptr);
     vkDestroyPipelineCache(logicalDevice, pipelineCache, nullptr);
     vkDestroyPipelineLayout(logicalDevice, pipelineLayout, nullptr);
     vkDestroyRenderPass(logicalDevice, renderPass, nullptr);
-    for (auto imageView : swapImageViews) {
+    for (auto imageView : swapImageViews)
+    {
         vkDestroyImageView(logicalDevice, imageView, nullptr);
     }
     vkDestroySwapchainKHR(logicalDevice, swap, nullptr);
 }
 
-void VkWindow::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+void VkWindow::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+{
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to start up the command buffer...\n");
-        exit(1);
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to start up the command buffer...");
     }
 
     VkRenderPassBeginInfo renderPassInfo{};
@@ -849,13 +910,14 @@ void VkWindow::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t image
     vkCmdBindIndexBuffer(commandBuffer, indexBuffer, 0, VK_INDEX_TYPE_UINT16);
     vkCmdDrawIndexed(commandBuffer, (uint32_t)(sizeof(vertIndices) / sizeof(vertIndices[0])), 1, 0, 0, 0);
     vkCmdEndRenderPass(commandBuffer);
-    if(vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to end command buffer successfully");
-        exit(1);
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to end command buffer successfully");
     }
 }
 
-void VkWindow::recreateSwapChain() {
+void VkWindow::recreateSwapChain()
+{
     vkDeviceWaitIdle(logicalDevice);
     cleanupSwap();
 
@@ -866,7 +928,8 @@ void VkWindow::recreateSwapChain() {
     createFramebuffers();
 }
 
-void VkWindow::paint() {
+void VkWindow::paint()
+{
     std::chrono::milliseconds startTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch());
 
     if (minimized)
@@ -876,13 +939,15 @@ void VkWindow::paint() {
 
     uint32_t imageIndex;
     VkResult result = vkAcquireNextImageKHR(logicalDevice, swap, UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
-    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || resized) {
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || resized)
+    {
         resized = false;
         recreateSwapChain();
         return;
-    } else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-        fprintf(stderr, "[VK] Something went wrong acquiring a new image to render...\nVkResult Code: %d\n", result);
-        exit(1);
+    }
+    else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+    {
+        DBFatal(DBVulkan, "Something went wrong acquiring a new image to render...VkResult Code: %d", result);
     }
 
     vkResetFences(logicalDevice, 1, &inFlightFence);
@@ -902,9 +967,9 @@ void VkWindow::paint() {
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to submit draw command buffer...\n");
-        exit(1);
+    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, inFlightFence) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Failed to submit draw command buffer...");
     }
 
     VkPresentInfoKHR presentInfo{};
@@ -921,27 +986,32 @@ void VkWindow::paint() {
     dt = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - startTime;
 }
 
-void VkWindow::onClose() {
+void VkWindow::onClose()
+{
     vkDeviceWaitIdle(logicalDevice);
 }
 
-void VkWindow::onResize() {
+void VkWindow::onResize()
+{
     resized = true;
     minimized = false;
 }
 
-void VkWindow::onMinimize() {
+void VkWindow::onMinimize()
+{
     minimized = true;
 }
 
-float VkWindow::getDT() {
+float VkWindow::getDT()
+{
     return dt.count();
 }
 
-void VkWindow::mainLoop() {
+void VkWindow::mainLoop()
+{
     float dt = getDT();
 
-    fprintf(stdout, "DT: %f\tFPS: %d\n", dt,  (int) (1000 / dt));
+    DBTrace(DBMain, "DT: %f\tFPS: %d", dt, (int)(1000 / dt));
 }
 
 #endif

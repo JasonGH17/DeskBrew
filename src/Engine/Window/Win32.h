@@ -14,6 +14,8 @@
 #include <windows.h>
 #include <stdio.h>
 
+#include "Core/Logger/Logger.h"
+
 class Win32
 {
 public:

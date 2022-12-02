@@ -2,18 +2,19 @@
 
 #include <vulkan/vulkan.h>
 
+#include "Core/Logger/Logger.h"
+
 #include <vector>
 #include <fstream>
 
-inline std::vector<char> readFile(const char* filepath) {
+inline std::vector<char> readFile(const char *filepath)
+{
     std::ifstream file(filepath, std::ios::ate | std::ios::binary);
 
-    if(!file.is_open()) {
-        fprintf(stderr, "[UTIL] Unable to open file: %s\n", filepath);
-        exit(1);
-    }
+    if (!file.is_open())
+        DBFatal(DBUtility, "Unable to open file: %s", filepath);
 
-    size_t fSize = (size_t) file.tellg();
+    size_t fSize = (size_t)file.tellg();
     std::vector<char> buff(fSize);
     file.seekg(0);
     file.read(buff.data(), fSize);
@@ -23,7 +24,8 @@ inline std::vector<char> readFile(const char* filepath) {
     return buff;
 }
 
-inline VkShaderModule loadShader(VkDevice& device, const char* filepath) {
+inline VkShaderModule loadShader(VkDevice &device, const char *filepath)
+{
     std::vector<char> file = readFile(filepath);
 
     VkShaderModuleCreateInfo createInfo{};
@@ -32,10 +34,8 @@ inline VkShaderModule loadShader(VkDevice& device, const char* filepath) {
     createInfo.pCode = reinterpret_cast<const uint32_t *>(file.data());
 
     VkShaderModule shader;
-    if(vkCreateShaderModule(device, &createInfo, nullptr, &shader) != VK_SUCCESS) {
-        fprintf(stderr, "[VK] Failed to load shader file: %s\n", filepath);
-        exit(1);
-    }
+    if (vkCreateShaderModule(device, &createInfo, nullptr, &shader) != VK_SUCCESS)
+        DBFatal(DBVulkan, "Failed to load shader file: %s", filepath);
 
     return shader;
 }

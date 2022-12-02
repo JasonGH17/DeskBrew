@@ -12,7 +12,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-class X11 {
+#include "Core/Logger/Logger.h"
+
+class X11
+{
 public:
     X11();
     ~X11();
