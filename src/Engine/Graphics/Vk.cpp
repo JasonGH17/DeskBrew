@@ -1,9 +1,10 @@
 #include "Vk.h"
 
-#ifdef DB_PLAT_WIN64
-
 VkWindow::VkWindow()
 {
+#ifdef DB_PLAT_LINUX
+    DBError(DBVulkan, "Linux implementation for vulkan is untested...");
+#endif
     createInstance();
     if (!init())
     {
@@ -28,24 +29,28 @@ VkWindow::~VkWindow() {}
 
 bool VkWindow::checkInstanceExtSupport()
 {
-    uint32_t extCount = 0;
-    vkEnumerateInstanceExtensionProperties(nullptr, &extCount, nullptr);
-    std::vector<VkExtensionProperties> extProps(extCount);
-    vkEnumerateInstanceExtensionProperties(nullptr, &extCount, extProps.data());
+    uint32_t availableExtCount = 0;
+    vkEnumerateInstanceExtensionProperties(nullptr, &availableExtCount, nullptr);
+    std::vector<VkExtensionProperties> extProps(availableExtCount);
+    vkEnumerateInstanceExtensionProperties(nullptr, &availableExtCount, extProps.data());
 
 #ifdef VK_DEBUG
-    DBDebug(DBVulkan, "(%d) Available vulkan instance extensions:", extCount);
+    DBDebug(DBVulkan, "(%d) Available vulkan instance extensions:", availableExtCount);
     for (VkExtensionProperties &ext : extProps)
         fprintf(stdout, "\t- %s\n", ext.extensionName);
 #endif
 
-    if (EXTCOUNT > extCount)
+    uint32_t extCount;
+    getVkInstanceExtensions(&extCount);
+    if (extCount > availableExtCount)
     {
         return false;
     }
-
-    for (const char *extName : extensionNames)
+    const char **exts;
+    exts = getVkInstanceExtensions(&extCount);
+    for (uint32_t i = 0; i < extCount; ++i)
     {
+        const char *extName = exts[i];
         bool found = false;
         for (VkExtensionProperties &ext : extProps)
         {
@@ -123,8 +128,9 @@ void VkWindow::createInstance()
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
-    createInfo.enabledExtensionCount = EXTCOUNT;
-    createInfo.ppEnabledExtensionNames = extensionNames;
+    uint32_t extCount = 0;
+    createInfo.ppEnabledExtensionNames = getVkInstanceExtensions(&extCount);
+    createInfo.enabledExtensionCount = extCount;
 
     if (enableValidationLayers)
     {
@@ -331,6 +337,8 @@ void VkWindow::createLogicalDevice()
 
 void VkWindow::createWindowSurface()
 {
+// TODO: Add XCB implementation
+#ifdef DB_PLAT_WIN64
     VkWin32SurfaceCreateInfoKHR createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
     createInfo.hwnd = getHWND();
@@ -340,6 +348,19 @@ void VkWindow::createWindowSurface()
     {
         DBFatal(DBVulkan, "Error when trying to create Vulkan window surface");
     }
+#endif
+#ifdef DB_PLAT_LINUX
+    VkXcbSurfaceCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+    createInfo.window = getWindow();
+    createInfo.connection = getConnection();
+    createInfo.flags = 0;
+
+    if (vkCreateXcbSurfaceKHR(instance, &createInfo, nullptr, &surface) != VK_SUCCESS)
+    {
+        DBFatal(DBVulkan, "Error when trying to create Vulkan window surface");
+    }
+#endif
 
     DBInfo(DBVulkan, "Created window surface");
 }
@@ -374,15 +395,11 @@ VkExtent2D VkWindow::pickSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities
     if (capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max())
         return capabilities.currentExtent;
 
-    RECT rc;
-    GetClientRect(getHWND(), &rc);
-    int width, height;
-    width = rc.bottom - rc.top;
-    height = rc.right - rc.left;
+    Vec2f dimensions = getInnerDimensions();
 
     VkExtent2D extent = {
-        static_cast<uint32_t>(width),
-        static_cast<uint32_t>(height)};
+        static_cast<uint32_t>(dimensions.x),
+        static_cast<uint32_t>(dimensions.y)};
 
     extent.width = std::clamp(extent.width, capabilities.minImageExtent.width, capabilities.maxImageExtent.width);
     extent.height = std::clamp(extent.height, capabilities.minImageExtent.height, capabilities.maxImageExtent.height);
@@ -1013,5 +1030,3 @@ void VkWindow::mainLoop()
 
     DBTrace(DBMain, "DT: %f\tFPS: %d", dt, (int)(1000 / dt));
 }
-
-#endif

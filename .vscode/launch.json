@@ -16,7 +16,7 @@
             "name": "Linux Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/bin/DeskBrew",
+            "program": "${workspaceFolder}/bin/DeskBrew",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/bin",

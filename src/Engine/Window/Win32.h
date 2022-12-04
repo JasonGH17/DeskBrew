@@ -14,6 +14,7 @@
 #include <windows.h>
 #include <stdio.h>
 
+#include "Math/Math.h"
 #include "Core/Logger/Logger.h"
 
 class Win32
@@ -41,6 +42,8 @@ protected:
     LRESULT handleMessage(UINT msg, WPARAM wParam, LPARAM lParam);
     HWND hwnd;
     bool running;
+
+    Vec2f dimensions;
 };
 
 #endif

@@ -45,6 +45,8 @@ bool X11::init()
         eventMask,
         valueList);
 
+    dimensions = {1024, 768};
+
     const char *windowName = "DeskBrew";
     xcb_change_property(
         xConn,
@@ -119,8 +121,9 @@ bool X11::broadcast()
 
         case XCB_CONFIGURE_NOTIFY:
         {
-            // xcb_configure_notify_event_t *confEvent = (xcb_configure_notify_event_t *)event;
-            // onResize(/*confEvent->width, confEvent->height*/);
+            xcb_configure_notify_event_t *confEvent = (xcb_configure_notify_event_t *)event;
+            dimensions = {(float)confEvent->width, (float)confEvent->height};
+            // onResize();
         }
         break;
 
@@ -138,6 +141,11 @@ bool X11::broadcast()
         free(event);
     }
     return running;
+}
+
+xcb_connection_t *X11::getConnection()
+{
+    return xConn;
 }
 
 xcb_window_t X11::getWindow()

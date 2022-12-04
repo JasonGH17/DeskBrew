@@ -59,6 +59,7 @@ bool Win32::init()
     }
 
     hwnd = ::CreateWindowEx(WS_EX_OVERLAPPEDWINDOW, L"DeskBrew", L"DeskBrew", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, CW_USEDEFAULT, 1024, 768, NULL, NULL, NULL, this);
+    dimensions = {1024, 768};
 
     if (!hwnd)
         return false;
@@ -139,6 +140,10 @@ LRESULT Win32::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam)
         }
         else
         {
+            RECT rc;
+            GetClientRect(hwnd, &rc);
+            dimensions = {(float)(rc.bottom - rc.top),
+                          (float)(rc.right - rc.left)};
             onResize();
         }
     }

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "Math/Math.h"
 #include "Core/Logger/Logger.h"
 
 class X11
@@ -26,6 +27,7 @@ public:
 
     bool isRunning();
     xcb_window_t getWindow();
+    xcb_connection_t* getConnection();
 
     virtual void mainLoop() = 0;
     virtual void paint() = 0;
@@ -41,6 +43,9 @@ private:
     xcb_atom_t wmProto;
     xcb_atom_t wmDeleteWin;
     bool running;
+
+protected:
+    Vec2f dimensions;
 };
 
 #endif

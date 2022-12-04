@@ -1,7 +1,6 @@
 #pragma once
 
 #include "api.h"
-#ifdef DB_PLAT_WIN64
 
 #include "Window/Window.h"
 #include <vulkan/vulkan.h>
@@ -21,7 +20,6 @@
 
 #include "Core/Logger/Logger.h"
 
-#define EXTCOUNT 2
 #define VALCOUNT 1
 #define GPUEXTCOUNT 1
 
@@ -90,7 +88,8 @@ public:
 
 private:
     VkInstance instance;
-    const char *extensionNames[EXTCOUNT] = {"VK_KHR_surface", "VK_KHR_win32_surface"};
+    // TODO: Move extension names to platform specific getter function.
+    // Linux platforms use different extensions.
     const char *validationLayers[VALCOUNT] = {"VK_LAYER_KHRONOS_validation"};
     const char *deviceExts[GPUEXTCOUNT] = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
@@ -146,5 +145,3 @@ private:
 
     std::chrono::milliseconds dt;
 };
-
-#endif

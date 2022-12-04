@@ -26,7 +26,8 @@
             "includePath": [
                 "/usr/include",
                 "${workspaceFolder}/src",
-                "${workspaceFolder}/src/Engine/**"
+                "${workspaceFolder}/src/Engine/**",
+                "${VULKAN_SDK}/include"
             ],
             "defines": [
                 "_DEBUG",
