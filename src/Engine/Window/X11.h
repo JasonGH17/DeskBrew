@@ -13,12 +13,13 @@
 #include <stdlib.h>
 
 #include "Math/Math.h"
+#include "Core/Event/EventUser.h"
 #include "Core/Logger/Logger.h"
 
-class X11
+class X11 : public EventUser
 {
 public:
-    X11();
+    X11(EventController *e);
     ~X11();
 
     bool init();
@@ -31,9 +32,6 @@ public:
 
     virtual void mainLoop() = 0;
     virtual void paint() = 0;
-    virtual void onClose() = 0;
-    virtual void onResize() = 0;
-    virtual void onMinimize() = 0;
 
 private:
     Display *display;

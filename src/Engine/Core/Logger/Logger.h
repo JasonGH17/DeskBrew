@@ -13,6 +13,7 @@ enum DBSystems
     DBWin32,
     DBX11,
     DBMain,
+    DBEvent,
     DBUtility,
     DBSYSTEMS
 };

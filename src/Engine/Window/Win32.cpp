@@ -2,7 +2,9 @@
 
 #ifdef DB_PLAT_WIN64
 
-Win32::Win32()
+#include "Core/Event/WindowEvent.h"
+
+Win32::Win32(EventController *e) : EventUser(e)
 {
     running = true;
 }
@@ -112,14 +114,20 @@ LRESULT Win32::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam)
     switch (msg)
     {
     case WM_DESTROY:
+    {
         DBInfo(DBWindow, "Destroyed window");
+        WCloseEvent e;
+        events()->dispatchEvent<WCloseEvent>(&e);
         running = false;
         PostQuitMessage(0);
         return 0;
+    }
 
     case WM_CREATE:
+    {
         DBInfo(DBWindow, "Created new window");
         return 0;
+    }
 
     case WM_PAINT:
     {
@@ -136,7 +144,8 @@ LRESULT Win32::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam)
     {
         if (wParam == SIZE_MINIMIZED)
         {
-            onMinimize();
+            WMinimizeEvent e;
+            events()->dispatchEvent<WMinimizeEvent>(&e);
         }
         else
         {
@@ -144,7 +153,8 @@ LRESULT Win32::handleMessage(UINT msg, WPARAM wParam, LPARAM lParam)
             GetClientRect(hwnd, &rc);
             dimensions = {(float)(rc.bottom - rc.top),
                           (float)(rc.right - rc.left)};
-            onResize();
+            WResizeEvent e((uint32_t)dimensions.x, (uint32_t)dimensions.y);
+            events()->dispatchEvent<WResizeEvent>(&e);
         }
     }
         return 0;

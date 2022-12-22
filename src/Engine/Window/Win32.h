@@ -15,12 +15,13 @@
 #include <stdio.h>
 
 #include "Math/Math.h"
+#include "Core/Event/EventUser.h"
 #include "Core/Logger/Logger.h"
 
-class Win32
+class Win32 : public EventUser
 {
 public:
-    Win32();
+    Win32(EventController *e);
     ~Win32();
 
     static LRESULT CALLBACK wndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
@@ -34,9 +35,6 @@ public:
 
     virtual void mainLoop() = 0;
     virtual void paint() = 0;
-    virtual void onClose() = 0;
-    virtual void onResize() = 0;
-    virtual void onMinimize() = 0;
 
 protected:
     LRESULT handleMessage(UINT msg, WPARAM wParam, LPARAM lParam);

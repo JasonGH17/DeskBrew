@@ -1,10 +1,11 @@
 #include <iostream>
+#include <Engine/Core/Event/EventController.h>
 #include <Engine/Graphics/Vk.h>
-#include <Engine/Window/Window.h>
 
 int main()
 {
-    VkWindow window = VkWindow();
+    EventController events;
+    VkWindow window = VkWindow(&events);
 
     return 0;
 }

@@ -11,5 +11,5 @@ include="-I.. -I. -I$VULKAN_SDK/include"
 linker="-lX11 -lxcb -lX11-xcb -L$VULKAN_SDK/lib -lvulkan"
 defines="-D_DEBUG -DVK_DEBUG -DVK_USE_PLATFORM_XCB_KHR -DDB_EXPORT -D_CRT_SECURE_NO_WARNINGS"
 
-echo Building "$outName".so
+echo Building lib"$outName".so
 g++ -o ../../bin/lib"$outName".so $files $cflags $cstd $include $linker $defines

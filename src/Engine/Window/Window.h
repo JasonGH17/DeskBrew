@@ -17,16 +17,17 @@ class DBAPI PlatformWindow : public X11
 #endif
 {
 public:
-    PlatformWindow();
+    #ifdef DB_PLAT_WIN64
+    PlatformWindow(EventController *e) : Win32(e) {};
+    #else
+    PlatformWindow(EventController *e) : X11(e) {};
+    #endif
     ~PlatformWindow();
 
     void start();
 
     virtual void mainLoop() = 0;
     virtual void paint() = 0;
-    virtual void onClose() = 0;
-    virtual void onResize() = 0;
-    virtual void onMinimize() = 0;
 
     Vec2f getInnerDimensions();
 

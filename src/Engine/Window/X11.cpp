@@ -2,7 +2,9 @@
 
 #ifdef DB_PLAT_LINUX
 
-X11::X11() {}
+#include "Core/Event/WindowEvent.h"
+
+X11::X11(EventController *e) { bindES(e); }
 X11::~X11() {}
 
 bool X11::init()
@@ -123,13 +125,16 @@ bool X11::broadcast()
         {
             xcb_configure_notify_event_t *confEvent = (xcb_configure_notify_event_t *)event;
             dimensions = {(float)confEvent->width, (float)confEvent->height};
-            // onResize();
+            WResizeEvent e((uint32_t)confEvent->width, (uint32_t)confEvent->height);
+            events()->dispatchEvent<WResizeEvent>(e);
         }
         break;
 
         case XCB_CLIENT_MESSAGE:
         {
             msg = (xcb_client_message_event_t *)event;
+            WCloseEvent e;
+            events()->dispatchEvent<WCloseEvent>(e);
             running = msg->data.data32[0] != wmDeleteWin;
         }
         break;

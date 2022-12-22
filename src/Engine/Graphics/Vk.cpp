@@ -1,6 +1,8 @@
 #include "Vk.h"
 
-VkWindow::VkWindow()
+#include <functional>
+
+VkWindow::VkWindow(EventController *e) : PlatformWindow(e)
 {
 #ifdef DB_PLAT_LINUX
     DBError(DBVulkan, "Linux implementation for vulkan is untested...");
@@ -21,6 +23,18 @@ VkWindow::VkWindow()
     createSyncObjects();
     createVertexBuffer();
     createIndexBuffer();
+
+    events()->addEventListener<WResizeEvent>([this](WResizeEvent *e)
+                                             { DBInfo(DBEvent, "%d %d", e->width, e->height); });
+
+    events()
+        ->addEventListener<WResizeEvent>([this](WResizeEvent *e)
+                                         {resized = true; minimized = false; DBTrace(DBEvent, "Resize event width: %d  height: %d", e->width, e->height); });
+    events()->addEventListener<WCloseEvent>([this](WCloseEvent *e)
+                                            {(void) e; vkDeviceWaitIdle(logicalDevice); DBTrace(DBEvent, "Close event"); });
+    events()->addEventListener<WMinimizeEvent>([this](WMinimizeEvent *e)
+                                               {(void) e; minimized = true; DBTrace(DBEvent, "Minimize event"); });
+
     start();
     cleanup();
 }
@@ -1001,22 +1015,6 @@ void VkWindow::paint()
     vkQueuePresentKHR(presentQueue, &presentInfo);
 
     dt = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()) - startTime;
-}
-
-void VkWindow::onClose()
-{
-    vkDeviceWaitIdle(logicalDevice);
-}
-
-void VkWindow::onResize()
-{
-    resized = true;
-    minimized = false;
-}
-
-void VkWindow::onMinimize()
-{
-    minimized = true;
 }
 
 float VkWindow::getDT()

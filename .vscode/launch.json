@@ -3,14 +3,18 @@
     "configurations": [
         {
             "name": "Windows Launch",
-            "type": "cppvsdbg",
+            "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/bin/DeskBrew.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/bin",
             "environment": [],
-            "console": "externalTerminal"
+            "MIMode": "gdb",
+            "miDebuggerPath": "D:/msys64/mingw64/bin/gdb.exe",
+            "externalConsole": true,
+            "setupCommands": [{"text": "-enable-pretty-printing", "ignoreFailures": true}],
+            "preLaunchTask": "Compile Project"
         },
         {
             "name": "Linux Launch",
@@ -21,6 +25,7 @@
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}/bin",
             "environment": [],
+            "preLaunchTask": "Compile Project"
         }
     ]
 }

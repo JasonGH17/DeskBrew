@@ -14,6 +14,8 @@
 #include <algorithm>
 #include <chrono>
 
+#include "Core/Event/WindowEvent.h"
+
 #include "Utils/Shader.h"
 #include "Utils/Vertex.h"
 #include "Utils/BufferMemory.h"
@@ -40,7 +42,7 @@ struct SwapChainSupportDetails {
 
 class DBAPI VkWindow : public PlatformWindow {
 public:
-    VkWindow();
+    VkWindow(EventController *e);
     ~VkWindow();
 
     bool checkInstanceExtSupport();
@@ -79,9 +81,6 @@ public:
     void copyBuffer(VkBuffer src, VkBuffer dst, VkDeviceSize size);
 
     virtual void paint() override;
-    virtual void onClose() override;
-    virtual void onResize() override;
-    virtual void onMinimize() override;
     virtual void mainLoop() override;
 
     float getDT();
