@@ -10,6 +10,7 @@ enum DBSystems
 {
     DBWindow,
     DBVulkan,
+    DBOpenGL,
     DBWin32,
     DBX11,
     DBMain,

@@ -8,7 +8,7 @@ static int lvCodes[6] = {64, 4, 6, 2, 1, 8};
 static const char *lvCodes[6] = {"0;41", "1;31", "1;33", "1;32", "1;34", "1;30"};
 #endif
 
-const char *systems[DBSYSTEMS] = {"Window", "Vulkan", "Win32", "X11", "Main", "Events", "Utility"};
+const char *systems[DBSYSTEMS] = {"Window", "Vulkan", "OpenGL", "Win32", "X11", "Main", "Events", "Utility"};
 
 const char *severity[LSEVERITIES] = {
     "[FATAL]",
