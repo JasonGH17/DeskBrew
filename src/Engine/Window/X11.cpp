@@ -4,7 +4,7 @@
 
 #include "Core/Event/WindowEvent.h"
 
-X11::X11(EventController *e) { bindES(e); }
+X11::X11(EventController *e) : EventUser(e) {}
 X11::~X11() {}
 
 bool X11::init()
@@ -126,7 +126,7 @@ bool X11::broadcast()
             xcb_configure_notify_event_t *confEvent = (xcb_configure_notify_event_t *)event;
             dimensions = {(float)confEvent->width, (float)confEvent->height};
             WResizeEvent e((uint32_t)confEvent->width, (uint32_t)confEvent->height);
-            events()->dispatchEvent<WResizeEvent>(e);
+            events()->dispatchEvent<WResizeEvent>(&e);
         }
         break;
 
@@ -134,7 +134,7 @@ bool X11::broadcast()
         {
             msg = (xcb_client_message_event_t *)event;
             WCloseEvent e;
-            events()->dispatchEvent<WCloseEvent>(e);
+            events()->dispatchEvent<WCloseEvent>(&e);
             running = msg->data.data32[0] != wmDeleteWin;
         }
         break;
