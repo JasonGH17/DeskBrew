@@ -2,6 +2,8 @@
 
 #include "api.h"
 
+#ifdef DB_PLAT_WIN64
+
 #include <Window/Window.h>
 #include <gl/gl.h>
 #include <gl/glu.h>
@@ -27,3 +29,5 @@ private:
     HGLRC ctx;
     HDC hdc;
 };
+
+#endif

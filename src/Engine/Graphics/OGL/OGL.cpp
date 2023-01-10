@@ -1,5 +1,7 @@
 #include "OGL.h"
 
+#ifdef DB_PLAT_WIN64
+
 #include <Core/Logger/Logger.h>
 #include <Core/Event/WindowEvent.h>
 
@@ -87,3 +89,5 @@ void OGL::paint()
 
     SwapBuffers(hdc);
 }
+
+#endif

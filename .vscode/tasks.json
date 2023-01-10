@@ -2,52 +2,14 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "Compile Engine.dll",
-            "windows": {
-                "command": "${workspaceFolder}/src/Engine/build.bat",
-            },
-            "linux": {
-                "command": "${workspaceFolder}/src/Engine/build.sh"
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/src/Engine"
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "group": "build"
-        },
-        {
-            "label": "Compile DeskBrew.exe",
-            "windows": {
-                "command": "${workspaceFolder}/src/App/build.bat",
-            },
-            "linux": {
-                "command": "${workspaceFolder}/src/App/build.sh"
-            },
-            "options": {
-                "cwd": "${workspaceFolder}/src/App"
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "group": "build"
-        },
-        {
-            "label": "Compile Shader Files",
-            "command": "${workspaceFolder}/src/Shader/build.bat",
-            "options": {
-                "cwd": "${workspaceFolder}/src/Shader"
-            },
-            "group": "build"
-        },
-        {
             "label": "Compile Project",
             "windows": {
-                "command": "${workspaceFolder}/build.bat",
+                "command": "node",
+                "args": ["${workspaceFolder}/build.js"],
             },
             "linux": {
-                "command": "${workspaceFolder}/build.sh"
+                "command": "node",
+                "args": ["${workspaceFolder}/build.js"]
             },
             "options": {
                 "cwd": "${workspaceFolder}"
