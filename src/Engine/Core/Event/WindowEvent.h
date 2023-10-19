@@ -8,6 +8,7 @@ public:
     WResizeEvent(uint32_t width, uint32_t height) : width(width), height(height){};
     ~WResizeEvent(){};
     static EventKind sType() { return W_ResizeEvent; };
+    using Event::type;
     virtual EventKind type() { return sType(); }
 
     uint32_t width, height;
@@ -22,6 +23,7 @@ public:
     WMoveEvent(uint32_t x, uint32_t y) : x(x), y(y){};
     ~WMoveEvent(){};
     static EventKind sType() { return W_MoveEvent; };
+    using Event::type;
     virtual EventKind type() { return sType(); }
 
     uint32_t x, y;
@@ -36,6 +38,7 @@ public:
     WMinimizeEvent(){};
     ~WMinimizeEvent(){};
     static EventKind sType() { return W_MinimizeEvent; };
+    using Event::type;
     virtual EventKind type() { return sType(); }
 
 private:
@@ -48,6 +51,7 @@ public:
     WCloseEvent(){};
     ~WCloseEvent(){};
     static EventKind sType() { return W_CloseEvent; };
+    using Event::type;
     virtual EventKind type() { return sType(); }
 
 private:

@@ -27,7 +27,7 @@ void DBFatal(DBSystems system, const char *msg, ...)
     va_start(args, msg);
     const int len = formatBufferLen(msg, args);
     char *f1 = (char *)malloc((size_t)len);
-    std::vsnprintf(f1, len, msg, args);
+    vsnprintf(f1, len, msg, args);
     va_end(args);
     const char *out = formatMsg("%s - Subsystem: %s - Message: %s\n", severity[Fatal], systems[system], f1);
     platformLog(Fatal, out);
@@ -40,7 +40,7 @@ void DBError(DBSystems system, const char *msg, ...)
     va_start(args, msg);
     const int len = formatBufferLen(msg, args);
     char *f1 = (char *)malloc((size_t)len);
-    std::vsnprintf(f1, len, msg, args);
+    vsnprintf(f1, len, msg, args);
     va_end(args);
     const char *out = formatMsg("%s - Subsystem: %s - Message: %s\n", severity[Error], systems[system], f1);
     platformLog(Error, out);
@@ -52,7 +52,7 @@ void DBWarn(DBSystems system, const char *msg, ...)
     va_start(args, msg);
     const int len = formatBufferLen(msg, args);
     char *f1 = (char *)malloc((size_t)len);
-    std::vsnprintf(f1, len, msg, args);
+    vsnprintf(f1, len, msg, args);
     va_end(args);
     const char *out = formatMsg("%s - Subsystem: %s - Message: %s\n", severity[Warn], systems[system], f1);
     platformLog(Warn, out);
@@ -64,7 +64,7 @@ void DBInfo(DBSystems system, const char *msg, ...)
     va_start(args, msg);
     const int len = formatBufferLen(msg, args);
     char *f1 = (char *)malloc((size_t)len);
-    std::vsnprintf(f1, len, msg, args);
+    vsnprintf(f1, len, msg, args);
     va_end(args);
     const char *out = formatMsg("%s - Subsystem: %s - Message: %s\n", severity[Info], systems[system], f1);
     platformLog(Info, out);
@@ -76,7 +76,7 @@ void DBDebug(DBSystems system, const char *msg, ...)
     va_start(args, msg);
     const int len = formatBufferLen(msg, args);
     char *f1 = (char *)malloc((size_t)len);
-    std::vsnprintf(f1, len, msg, args);
+    vsnprintf(f1, len, msg, args);
     va_end(args);
     const char *out = formatMsg("%s - Subsystem: %s - Message: %s\n", severity[Debug], systems[system], f1);
     platformLog(Debug, out);
@@ -88,7 +88,7 @@ void DBTrace(DBSystems system, const char *msg, ...)
     va_start(args, msg);
     const int len = formatBufferLen(msg, args);
     char *f1 = (char *)malloc((size_t)len);
-    std::vsnprintf(f1, len, msg, args);
+    vsnprintf(f1, len, msg, args);
     va_end(args);
     const char *out = formatMsg("%s - Subsystem: %s - Message: %s\n", severity[Trace], systems[system], f1);
     platformLog(Trace, out);
@@ -98,7 +98,7 @@ int formatBufferLen(const char *msg, va_list args)
 {
     va_list copy;
     va_copy(copy, args);
-    const int len = std::vsnprintf(NULL, 0, msg, copy);
+    const int len = vsnprintf(NULL, 0, msg, copy);
     va_end(copy);
     return len + 1;
 }
@@ -109,7 +109,7 @@ const char *formatMsg(const char *msg, ...)
     va_start(args, msg);
     const int len = formatBufferLen(msg, args);
     char *buffer = (char *)malloc((size_t)len);
-    std::vsnprintf(buffer, len, msg, args);
+    vsnprintf(buffer, len, msg, args);
     va_end(args);
     return buffer;
 }
