@@ -298,7 +298,9 @@ void VkWindow::pickPhysicalDevice()
         DBFatal(DBVulkan, "No suitable Vulkan compliant devices were found on this machine...");
     }
 
-    DBInfo(DBVulkan, "Picked graphics device");
+    VkPhysicalDeviceProperties deviceProperties;
+    vkGetPhysicalDeviceProperties(physicalDevice, &deviceProperties);
+    DBInfo(DBVulkan, "Picked graphics device: %s", deviceProperties.deviceName);
 }
 
 void VkWindow::createLogicalDevice()
@@ -882,8 +884,9 @@ void VkWindow::createSyncObjects()
 
 void VkWindow::cleanup()
 {
-    vkDestroySemaphore(logicalDevice, imageAvailableSemaphore, nullptr);
+    vkDeviceWaitIdle(logicalDevice);
     vkDestroySemaphore(logicalDevice, renderFinishedSemaphore, nullptr);
+    vkDestroySemaphore(logicalDevice, imageAvailableSemaphore, nullptr);
     vkDestroyFence(logicalDevice, inFlightFence, nullptr);
     vkDestroyCommandPool(logicalDevice, commandPool, nullptr);
     cleanupSwap();
